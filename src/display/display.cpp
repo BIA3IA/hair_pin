@@ -3,7 +3,7 @@
 
 Arduino_DataBus *bus = new Arduino_HWSPI(LCD_DC, LCD_CS, LCD_SCK, LCD_DIN);
 Arduino_GFX *gfx = new Arduino_ST7789(
-    bus, LCD_RST, 0 /* rotation */, true /* IPS */, 240 /* width */,
+    bus, LCD_RST, 1 /* rotation */, true /* IPS */, 240 /* width */,
     280 /* height */, 0 /* col offset 1 */, 20 /* row offset 1 */,
     0 /* col offset 2 */, 20 /* row offset 2 */);
 
