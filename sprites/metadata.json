@@ -517,62 +517,62 @@
         "view": "low top-down",
         "created_at": "2026-09-08T12:22:56.147552+00:00"
       },
-      "folder": "sitting_down_on_the",
+      "folder": "sitting_down",
       "frames": {
         "rotations": {
-          "south": "sitting_down_on_the/rotations/south.png",
-          "south-east": "sitting_down_on_the/rotations/south-east.png",
-          "east": "sitting_down_on_the/rotations/east.png",
-          "north-east": "sitting_down_on_the/rotations/north-east.png",
-          "north": "sitting_down_on_the/rotations/north.png",
-          "north-west": "sitting_down_on_the/rotations/north-west.png",
-          "west": "sitting_down_on_the/rotations/west.png",
-          "south-west": "sitting_down_on_the/rotations/south-west.png"
+          "south": "sitting_down/rotations/south.png",
+          "south-east": "sitting_down/rotations/south-east.png",
+          "east": "sitting_down/rotations/east.png",
+          "north-east": "sitting_down/rotations/north-east.png",
+          "north": "sitting_down/rotations/north.png",
+          "north-west": "sitting_down/rotations/north-west.png",
+          "west": "sitting_down/rotations/west.png",
+          "south-west": "sitting_down/rotations/south-west.png"
         },
         "animations": {
           "Idle": {
             "direction": "south",
             "frames": [
-              "sitting_down_on_the/animations/Idle/frame_000.png",
-              "sitting_down_on_the/animations/Idle/frame_001.png",
-              "sitting_down_on_the/animations/Idle/frame_002.png",
-              "sitting_down_on_the/animations/Idle/frame_003.png",
-              "sitting_down_on_the/animations/Idle/frame_004.png",
-              "sitting_down_on_the/animations/Idle/frame_005.png",
-              "sitting_down_on_the/animations/Idle/frame_006.png",
-              "sitting_down_on_the/animations/Idle/frame_007.png"
+              "sitting_down/animations/Idle/frame_000.png",
+              "sitting_down/animations/Idle/frame_001.png",
+              "sitting_down/animations/Idle/frame_002.png",
+              "sitting_down/animations/Idle/frame_003.png",
+              "sitting_down/animations/Idle/frame_004.png",
+              "sitting_down/animations/Idle/frame_005.png",
+              "sitting_down/animations/Idle/frame_006.png",
+              "sitting_down/animations/Idle/frame_007.png"
             ]
           },
           "The_character_shifts_her_weight_forward_placing_he": {
             "direction": "south",
             "frames": [
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_000.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_001.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_002.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_003.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_004.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_005.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_006.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_007.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_008.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_009.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_010.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_011.png",
-              "sitting_down_on_the/animations/The_character_shifts_her_weight_forward_placing_he/frame_012.png"
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_000.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_001.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_002.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_003.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_004.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_005.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_006.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_007.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_008.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_009.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_010.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_011.png",
+              "sitting_down/animations/The_character_shifts_her_weight_forward_placing_he/frame_012.png"
             ]
           },
           "The_girl_shifts_her_weight_slightly_bringing_her_h": {
             "direction": "south",
             "frames": [
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_000.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_001.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_002.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_003.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_004.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_005.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_006.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_007.png",
-              "sitting_down_on_the/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_008.png"
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_000.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_001.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_002.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_003.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_004.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_005.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_006.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_007.png",
+              "sitting_down/animations/The_girl_shifts_her_weight_slightly_bringing_her_h/frame_008.png"
             ]
           }
         }
@@ -592,108 +592,108 @@
         "view": "low top-down",
         "created_at": "2026-09-08T12:33:26.463456+00:00"
       },
-      "folder": "She_is_holding_a_lar",
+      "folder": "wooden_frame",
       "frames": {
         "rotations": {
-          "south": "She_is_holding_a_lar/rotations/south.png",
-          "south-east": "She_is_holding_a_lar/rotations/south-east.png",
-          "east": "She_is_holding_a_lar/rotations/east.png",
-          "north-east": "She_is_holding_a_lar/rotations/north-east.png",
-          "north": "She_is_holding_a_lar/rotations/north.png",
-          "north-west": "She_is_holding_a_lar/rotations/north-west.png",
-          "west": "She_is_holding_a_lar/rotations/west.png",
-          "south-west": "She_is_holding_a_lar/rotations/south-west.png"
+          "south": "wooden_frame/rotations/south.png",
+          "south-east": "wooden_frame/rotations/south-east.png",
+          "east": "wooden_frame/rotations/east.png",
+          "north-east": "wooden_frame/rotations/north-east.png",
+          "north": "wooden_frame/rotations/north.png",
+          "north-west": "wooden_frame/rotations/north-west.png",
+          "west": "wooden_frame/rotations/west.png",
+          "south-west": "wooden_frame/rotations/south-west.png"
         },
         "animations": {
           "The_girl_holds_the_wooden_frame_steady_as_the_blan": {
             "direction": "south",
             "frames": [
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_000.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_001.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_002.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_003.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_004.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_005.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_006.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_007.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_008.png"
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_000.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_001.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_002.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_003.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_004.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_005.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_006.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_007.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan/frame_008.png"
             ]
           },
           "The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da": {
             "direction": "south",
             "frames": [
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_000.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_001.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_002.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_003.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_004.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_005.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_006.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_007.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_008.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_009.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_010.png"
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_000.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_001.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_002.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_003.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_004.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_005.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_006.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_007.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_008.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_009.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_010.png"
             ]
           },
           "The_girl_lowers_the_wooden_frame_from_her_chest_sm": {
             "direction": "south",
             "frames": [
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_000.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_001.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_002.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_003.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_004.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_005.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_006.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_007.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_008.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_009.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_010.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_011.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_012.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_013.png",
-              "She_is_holding_a_lar/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_014.png"
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_000.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_001.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_002.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_003.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_004.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_005.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_006.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_007.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_008.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_009.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_010.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_011.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_012.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_013.png",
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_014.png"
             ]
           },
           "The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81": {
             "direction": "south",
             "frames": [
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_000.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_001.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_002.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_003.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_004.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_005.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_006.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_007.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_008.png"
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_000.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_001.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_002.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_003.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_004.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_005.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_006.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_007.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81/frame_008.png"
             ]
           },
           "The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29": {
             "direction": "south",
             "frames": [
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_000.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_001.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_002.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_003.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_004.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_005.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_006.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_007.png",
-              "She_is_holding_a_lar/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_008.png"
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_000.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_001.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_002.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_003.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_004.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_005.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_006.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_007.png",
+              "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-ce5bfa29/frame_008.png"
             ]
           },
           "Idle": {
             "direction": "south",
             "frames": [
-              "She_is_holding_a_lar/animations/Idle/frame_000.png",
-              "She_is_holding_a_lar/animations/Idle/frame_001.png",
-              "She_is_holding_a_lar/animations/Idle/frame_002.png",
-              "She_is_holding_a_lar/animations/Idle/frame_003.png",
-              "She_is_holding_a_lar/animations/Idle/frame_004.png",
-              "She_is_holding_a_lar/animations/Idle/frame_005.png",
-              "She_is_holding_a_lar/animations/Idle/frame_006.png",
-              "She_is_holding_a_lar/animations/Idle/frame_007.png"
+              "wooden_frame/animations/Idle/frame_000.png",
+              "wooden_frame/animations/Idle/frame_001.png",
+              "wooden_frame/animations/Idle/frame_002.png",
+              "wooden_frame/animations/Idle/frame_003.png",
+              "wooden_frame/animations/Idle/frame_004.png",
+              "wooden_frame/animations/Idle/frame_005.png",
+              "wooden_frame/animations/Idle/frame_006.png",
+              "wooden_frame/animations/Idle/frame_007.png"
             ]
           }
         }
@@ -713,104 +713,104 @@
         "view": "low top-down",
         "created_at": "2026-09-08T12:33:46.590919+00:00"
       },
-      "folder": "sitting_on_the_groun",
+      "folder": "sitting_laptop",
       "frames": {
         "rotations": {
-          "south": "sitting_on_the_groun/rotations/south.png",
-          "south-east": "sitting_on_the_groun/rotations/south-east.png",
-          "east": "sitting_on_the_groun/rotations/east.png",
-          "north-east": "sitting_on_the_groun/rotations/north-east.png",
-          "north": "sitting_on_the_groun/rotations/north.png",
-          "north-west": "sitting_on_the_groun/rotations/north-west.png",
-          "west": "sitting_on_the_groun/rotations/west.png",
-          "south-west": "sitting_on_the_groun/rotations/south-west.png"
+          "south": "sitting_laptop/rotations/south.png",
+          "south-east": "sitting_laptop/rotations/south-east.png",
+          "east": "sitting_laptop/rotations/east.png",
+          "north-east": "sitting_laptop/rotations/north-east.png",
+          "north": "sitting_laptop/rotations/north.png",
+          "north-west": "sitting_laptop/rotations/north-west.png",
+          "west": "sitting_laptop/rotations/west.png",
+          "south-west": "sitting_laptop/rotations/south-west.png"
         },
         "animations": {
           "closing_laptop": {
             "direction": "south",
             "frames": [
-              "sitting_on_the_groun/animations/closing_laptop/frame_000.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_001.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_002.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_003.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_004.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_005.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_006.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_007.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_008.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_009.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_010.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_011.png",
-              "sitting_on_the_groun/animations/closing_laptop/frame_012.png"
+              "sitting_laptop/animations/closing_laptop/frame_000.png",
+              "sitting_laptop/animations/closing_laptop/frame_001.png",
+              "sitting_laptop/animations/closing_laptop/frame_002.png",
+              "sitting_laptop/animations/closing_laptop/frame_003.png",
+              "sitting_laptop/animations/closing_laptop/frame_004.png",
+              "sitting_laptop/animations/closing_laptop/frame_005.png",
+              "sitting_laptop/animations/closing_laptop/frame_006.png",
+              "sitting_laptop/animations/closing_laptop/frame_007.png",
+              "sitting_laptop/animations/closing_laptop/frame_008.png",
+              "sitting_laptop/animations/closing_laptop/frame_009.png",
+              "sitting_laptop/animations/closing_laptop/frame_010.png",
+              "sitting_laptop/animations/closing_laptop/frame_011.png",
+              "sitting_laptop/animations/closing_laptop/frame_012.png"
             ]
           },
           "glowing": {
             "direction": "south",
             "frames": [
-              "sitting_on_the_groun/animations/glowing/frame_000.png",
-              "sitting_on_the_groun/animations/glowing/frame_001.png",
-              "sitting_on_the_groun/animations/glowing/frame_002.png",
-              "sitting_on_the_groun/animations/glowing/frame_003.png",
-              "sitting_on_the_groun/animations/glowing/frame_004.png",
-              "sitting_on_the_groun/animations/glowing/frame_005.png",
-              "sitting_on_the_groun/animations/glowing/frame_006.png",
-              "sitting_on_the_groun/animations/glowing/frame_007.png",
-              "sitting_on_the_groun/animations/glowing/frame_008.png",
-              "sitting_on_the_groun/animations/glowing/frame_009.png",
-              "sitting_on_the_groun/animations/glowing/frame_010.png",
-              "sitting_on_the_groun/animations/glowing/frame_011.png",
-              "sitting_on_the_groun/animations/glowing/frame_012.png",
-              "sitting_on_the_groun/animations/glowing/frame_013.png",
-              "sitting_on_the_groun/animations/glowing/frame_014.png"
+              "sitting_laptop/animations/glowing/frame_000.png",
+              "sitting_laptop/animations/glowing/frame_001.png",
+              "sitting_laptop/animations/glowing/frame_002.png",
+              "sitting_laptop/animations/glowing/frame_003.png",
+              "sitting_laptop/animations/glowing/frame_004.png",
+              "sitting_laptop/animations/glowing/frame_005.png",
+              "sitting_laptop/animations/glowing/frame_006.png",
+              "sitting_laptop/animations/glowing/frame_007.png",
+              "sitting_laptop/animations/glowing/frame_008.png",
+              "sitting_laptop/animations/glowing/frame_009.png",
+              "sitting_laptop/animations/glowing/frame_010.png",
+              "sitting_laptop/animations/glowing/frame_011.png",
+              "sitting_laptop/animations/glowing/frame_012.png",
+              "sitting_laptop/animations/glowing/frame_013.png",
+              "sitting_laptop/animations/glowing/frame_014.png"
             ]
           },
           "typing_laptop": {
             "direction": "south",
             "frames": [
-              "sitting_on_the_groun/animations/typing_laptop/frame_000.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_001.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_002.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_003.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_004.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_005.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_006.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_007.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_008.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_009.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_010.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_011.png",
-              "sitting_on_the_groun/animations/typing_laptop/frame_012.png"
+              "sitting_laptop/animations/typing_laptop/frame_000.png",
+              "sitting_laptop/animations/typing_laptop/frame_001.png",
+              "sitting_laptop/animations/typing_laptop/frame_002.png",
+              "sitting_laptop/animations/typing_laptop/frame_003.png",
+              "sitting_laptop/animations/typing_laptop/frame_004.png",
+              "sitting_laptop/animations/typing_laptop/frame_005.png",
+              "sitting_laptop/animations/typing_laptop/frame_006.png",
+              "sitting_laptop/animations/typing_laptop/frame_007.png",
+              "sitting_laptop/animations/typing_laptop/frame_008.png",
+              "sitting_laptop/animations/typing_laptop/frame_009.png",
+              "sitting_laptop/animations/typing_laptop/frame_010.png",
+              "sitting_laptop/animations/typing_laptop/frame_011.png",
+              "sitting_laptop/animations/typing_laptop/frame_012.png"
             ]
           },
           "punching_laptop": {
             "direction": "south",
             "frames": [
-              "sitting_on_the_groun/animations/punching_laptop/frame_000.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_001.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_002.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_003.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_004.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_005.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_006.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_007.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_008.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_009.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_010.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_011.png",
-              "sitting_on_the_groun/animations/punching_laptop/frame_012.png"
+              "sitting_laptop/animations/punching_laptop/frame_000.png",
+              "sitting_laptop/animations/punching_laptop/frame_001.png",
+              "sitting_laptop/animations/punching_laptop/frame_002.png",
+              "sitting_laptop/animations/punching_laptop/frame_003.png",
+              "sitting_laptop/animations/punching_laptop/frame_004.png",
+              "sitting_laptop/animations/punching_laptop/frame_005.png",
+              "sitting_laptop/animations/punching_laptop/frame_006.png",
+              "sitting_laptop/animations/punching_laptop/frame_007.png",
+              "sitting_laptop/animations/punching_laptop/frame_008.png",
+              "sitting_laptop/animations/punching_laptop/frame_009.png",
+              "sitting_laptop/animations/punching_laptop/frame_010.png",
+              "sitting_laptop/animations/punching_laptop/frame_011.png",
+              "sitting_laptop/animations/punching_laptop/frame_012.png"
             ]
           },
           "Idle": {
             "direction": "south",
             "frames": [
-              "sitting_on_the_groun/animations/Idle/frame_000.png",
-              "sitting_on_the_groun/animations/Idle/frame_001.png",
-              "sitting_on_the_groun/animations/Idle/frame_002.png",
-              "sitting_on_the_groun/animations/Idle/frame_003.png",
-              "sitting_on_the_groun/animations/Idle/frame_004.png",
-              "sitting_on_the_groun/animations/Idle/frame_005.png",
-              "sitting_on_the_groun/animations/Idle/frame_006.png",
-              "sitting_on_the_groun/animations/Idle/frame_007.png"
+              "sitting_laptop/animations/Idle/frame_000.png",
+              "sitting_laptop/animations/Idle/frame_001.png",
+              "sitting_laptop/animations/Idle/frame_002.png",
+              "sitting_laptop/animations/Idle/frame_003.png",
+              "sitting_laptop/animations/Idle/frame_004.png",
+              "sitting_laptop/animations/Idle/frame_005.png",
+              "sitting_laptop/animations/Idle/frame_006.png",
+              "sitting_laptop/animations/Idle/frame_007.png"
             ]
           }
         }
