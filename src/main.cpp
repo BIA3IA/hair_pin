@@ -14,4 +14,7 @@ void setup() {
   Serial.println("Bianca clip: ciao mondo, firmware vivo!");
 }
 
-void loop() { delay(1000); }
+void loop() {
+  imu_read_print();
+  delay(1000);
+}

@@ -1,6 +1,7 @@
-#include "imu.h" // il tuo header, con i pin e le dichiarazioni delle funzioni
-#include <SensorQMI8658.hpp> // la classe del sensore, viene dalla libreria SensorLib che hai aggiunto a platformio.ini
-#include <Wire.h> // libreria I2C di Arduino (già inclusa nel core, non serve aggiungerla a lib_deps) — serve perché QMI8658 comunica via I2C
+#include "imu.h"
+#include "inclinazione.h"
+#include <SensorQMI8658.hpp>
+#include <Wire.h>
 
 SensorQMI8658 qmi;
 
@@ -25,8 +26,12 @@ void imu_read_print() {
   IMUdata acc, gyr;
   if (qmi.getDataReady()) {
     qmi.getAccelerometer(acc.x, acc.y, acc.z);
+
+    float angle = tilt_angle(acc.x, acc.y, acc.z);
+
     qmi.getGyroscope(gyr.x, gyr.y, gyr.z);
-    Serial.printf("ACC x:%.2f y:%.2f z:%.2f | GYR x:%.2f y:%.2f z:%.2f\n",
-                  acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z);
+    Serial.printf(
+        "ACC x:%.2f y:%.2f z:%.2f | GYR x:%.2f y:%.2f z:%.2f | Tilt: %.1f\n",
+        acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, angle);
   }
 }
