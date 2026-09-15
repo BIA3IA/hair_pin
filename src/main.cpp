@@ -16,5 +16,5 @@ void setup() {
 
 void loop() {
   imu_read_print();
-  delay(1000);
+  delay(20);
 }

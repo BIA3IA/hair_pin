@@ -5,8 +5,8 @@ float accel_magnitude(float ax, float ay, float az) {
 }
 
 bool is_shaking(float magnitude, bool currently_shaking) {
-  const float ENTRY_THRESHOLD = 0.5;
-  const float EXIT_THRESHOLD = 0.3;
+  const float ENTRY_THRESHOLD = 0.4;
+  const float EXIT_THRESHOLD = 0.2;
 
   const float deviation = fabsf(magnitude - 1.0f);
 

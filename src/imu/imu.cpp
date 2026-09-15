@@ -1,5 +1,7 @@
+#include "cadenza.h"
 #include "imu.h"
 #include "inclinazione.h"
+#include "passi.h"
 #include "shake.h"
 #include <SensorQMI8658.hpp>
 #include <Wire.h>
@@ -40,10 +42,19 @@ void imu_read_print() {
     static bool shaking = false;
     shaking = is_shaking(magnitude, shaking);
 
+    float vertical_accel = fabsf(acc.y - 1.0f);
+    const bool step_detected = step_detection(vertical_accel);
+    const bool walking = is_walking(step_detected);
+
     qmi.getGyroscope(gyr.x, gyr.y, gyr.z);
-    Serial.printf("ACC x:%.2f y:%.2f z:%.2f | GYR x:%.2f y:%.2f z:%.2f | "
-                  "Tilted: %d | UpsideDown: %d | Shaking: %d\n",
-                  acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, tilted, upside_down,
-                  shaking);
+
+    if (step_detected) {
+      Serial.printf("Step detected! vertical=%f | Walking: %d\n",
+                    vertical_accel, walking);
+    }
+    // Serial.printf("ACC x:%.2f y:%.2f z:%.2f | GYR x:%.2f y:%.2f z:%.2f | "
+    //               "Tilted: %d | UpsideDown: %d | Shaking: %d | Step: %d\n",
+    //               acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, tilted,
+    //               upside_down, shaking, step_detected);
   }
 }
