@@ -1,6 +1,6 @@
 #include "cadenza.h"
 
-bool is_walking(bool step_this_tick) {
+bool is_walking(bool step_this_tick, bool is_rotating) {
   const unsigned long MIN_STEP_INTERVAL_MS = 250;
   const unsigned long MAX_STEP_INTERVAL_MS = 900;
   const float MAX_INTERVAL_RATIO = 1.5;
@@ -13,11 +13,15 @@ bool is_walking(bool step_this_tick) {
 
   unsigned long now = millis();
 
-  if (step_this_tick) {
+  // passo valido se c'è stato un passo in questo tick e non stiamo ruotando
+  const bool count_this_step = step_this_tick && !is_rotating;
+
+  if (count_this_step) {
     if (last_step_time != 0) {
       unsigned long interval = now - last_step_time;
 
-      if (interval >= MIN_STEP_INTERVAL_MS && interval <= MAX_STEP_INTERVAL_MS) {
+      if (interval >= MIN_STEP_INTERVAL_MS &&
+          interval <= MAX_STEP_INTERVAL_MS) {
         if (prev_interval != 0) {
           float ratio = (float)interval / (float)prev_interval;
           if (ratio < 1.0) {
@@ -42,8 +46,10 @@ bool is_walking(bool step_this_tick) {
     if (consistent_steps >= 2) {
       walking = true;
     }
-  } else if (walking && (now - last_step_time) > WALKING_TIMEOUT_MS) {
-    // troppo tempo senza un nuovo passo: ci siamo fermati
+  }
+
+  if (walking && (now - last_step_time) > WALKING_TIMEOUT_MS) {
+    // troppo tempo senza un vero passo
     walking = false;
     consistent_steps = 0;
     prev_interval = 0;
