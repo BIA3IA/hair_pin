@@ -1,5 +1,6 @@
 #include "imu.h"
 #include "inclinazione.h"
+#include "shake.h"
 #include <SensorQMI8658.hpp>
 #include <Wire.h>
 
@@ -35,10 +36,14 @@ void imu_read_print() {
     tilted = is_tilted(angle, tilted);
     upside_down = is_upside_down(angle, upside_down);
 
+    float magnitude = accel_magnitude(acc.x, acc.y, acc.z);
+    static bool shaking = false;
+    shaking = is_shaking(magnitude, shaking);
+
     qmi.getGyroscope(gyr.x, gyr.y, gyr.z);
     Serial.printf("ACC x:%.2f y:%.2f z:%.2f | GYR x:%.2f y:%.2f z:%.2f | "
-                  "Tilted: %d | UpsideDown: %d",
-                  acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, tilted,
-                  upside_down);
+                  "Tilted: %d | UpsideDown: %d | Shaking: %d\n",
+                  acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, tilted, upside_down,
+                  shaking);
   }
 }
