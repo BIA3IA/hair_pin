@@ -29,9 +29,16 @@ void imu_read_print() {
 
     float angle = tilt_angle(acc.x, acc.y, acc.z);
 
+    static bool tilted = false;
+    static bool upside_down = false;
+
+    tilted = is_tilted(angle, tilted);
+    upside_down = is_upside_down(angle, upside_down);
+
     qmi.getGyroscope(gyr.x, gyr.y, gyr.z);
-    Serial.printf(
-        "ACC x:%.2f y:%.2f z:%.2f | GYR x:%.2f y:%.2f z:%.2f | Tilt: %.1f\n",
-        acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, angle);
+    Serial.printf("ACC x:%.2f y:%.2f z:%.2f | GYR x:%.2f y:%.2f z:%.2f | "
+                  "Tilted: %d | UpsideDown: %d",
+                  acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, tilted,
+                  upside_down);
   }
 }
