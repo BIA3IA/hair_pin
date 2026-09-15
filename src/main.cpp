@@ -14,7 +14,8 @@ void setup() {
 }
 
 void loop() {
-  display_test();
-  imu_read_print();
+
+  sprite_draw_frame("/Idle/idle_1.bin", 0, 40, 40);
+
   delay(1000);
 }

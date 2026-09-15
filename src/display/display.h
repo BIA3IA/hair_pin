@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <Arduino_GFX_Library.h>
+extern Arduino_GFX *gfx;
 
 #define LCD_SCK 1
 #define LCD_DIN 2
