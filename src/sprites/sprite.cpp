@@ -27,8 +27,10 @@ void sprite_init() {
 
 void sprite_draw_frame(const char *path, int frameIndex, float scale) {
   File f = LittleFS.open(path, "r");
-  if (!f)
+  if (!f) {
+    Serial.printf("Impossibile aprire: %s\n", path);
     return;
+  }
 
   uint8_t header[6];
   f.read(header, 6);
@@ -70,4 +72,16 @@ void sprite_draw_frame(const char *path, int frameIndex, float scale) {
 
   delete[] mask;
   delete[] pixels;
+}
+
+int sprite_get_frame_count(const char *path) {
+  File f = LittleFS.open(path, "r");
+  if (!f)
+    return 1;
+
+  uint8_t header[6];
+  f.read(header, 6);
+  f.close();
+
+  return header[4] | (header[5] << 8);
 }
