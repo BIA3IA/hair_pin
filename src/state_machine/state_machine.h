@@ -1,3 +1,4 @@
+#include "imu/imu.h"
 #include <Arduino.h>
 
 enum class State {
@@ -13,5 +14,5 @@ enum class State {
   NOTIFICATION
 };
 
-void state_machine_update(float angle, float magnitude, bool step_detected);
+void state_machine_update(SensorState sensor_state);
 State state_machine_current();
