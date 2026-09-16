@@ -85,3 +85,24 @@ int sprite_get_frame_count(const char *path) {
 
   return header[4] | (header[5] << 8);
 }
+
+void sprite_get_draw_rect(const char *path, float scale, int *x, int *y,
+                          int *dw, int *dh) {
+  File f = LittleFS.open(path, "r");
+  if (!f) {
+    *x = *y = *dw = *dh = 0;
+    return;
+  }
+
+  uint8_t header[6];
+  f.read(header, 6);
+  f.close();
+
+  uint16_t w = header[0] | (header[1] << 8);
+  uint16_t h = header[2] | (header[3] << 8);
+
+  *dw = (int)(w * scale);
+  *dh = (int)(h * scale);
+  *x = (SCREEN_WIDTH - *dw) / 2;
+  *y = (SCREEN_HEIGHT - *dh) / 2;
+}
