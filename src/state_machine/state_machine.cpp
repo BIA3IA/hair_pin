@@ -26,10 +26,18 @@ void state_machine_update(SensorState sensor_state) {
 
   } else {
 
-    if (current_state != State::IDLE) {
+    if (current_state != State::IDLE && current_state != State::SITTING &&
+        current_state != State::SLEEPING) {
+      current_state = State::IDLE;
       idle_since = millis();
     }
-    current_state = State::IDLE;
+
+    unsigned long idle_duration = millis() - idle_since;
+    if (idle_duration >= SLEEPING_THRESHOLD_MS) {
+      current_state = State::SLEEPING;
+    } else if (idle_duration >= SITTING_THRESHOLD_MS) {
+      current_state = State::SITTING;
+    }
   }
 }
 

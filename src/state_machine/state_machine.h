@@ -1,5 +1,6 @@
 #include "imu/imu.h"
 #include <Arduino.h>
+#pragma once
 
 enum class State {
   IDLE,

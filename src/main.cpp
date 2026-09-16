@@ -1,6 +1,7 @@
 #include "display/display.h"
 #include "imu/imu.h"
 #include "sprites/sprite.h"
+#include "state_machine/state_machine.h"
 #include <Arduino.h>
 
 void setup() {
@@ -15,6 +16,6 @@ void setup() {
 }
 
 void loop() {
-  imu_read_print();
+  state_machine_update(imu_update());
   delay(20);
 }
