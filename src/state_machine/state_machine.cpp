@@ -12,10 +12,6 @@ void state_machine_update(SensorState sensor_state) {
 
     current_state = State::WALKING;
 
-  } else if (sensor_state.tilted) {
-
-    current_state = State::TILTED;
-
   } else if (sensor_state.upside_down) {
 
     current_state = State::UPSIDE_DOWN;
@@ -23,6 +19,10 @@ void state_machine_update(SensorState sensor_state) {
   } else if (sensor_state.shaking) {
 
     current_state = State::SHAKEN;
+
+  } else if (sensor_state.tilted) {
+
+    current_state = State::TILTED;
 
   } else {
 

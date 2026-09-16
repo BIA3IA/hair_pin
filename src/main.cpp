@@ -26,15 +26,12 @@ const char *animation_path_for_state(State state) {
 static int current_frame = 0;
 static int frame_count = 1;
 static unsigned long last_frame_time = 0;
-const unsigned long FRAME_INTERVAL_MS = 20;
+const unsigned long FRAME_INTERVAL_MS = 10;
 static int prev_x = 0, prev_y = 0, prev_dw = 0, prev_dh = 0;
 
 void draw_animation_frame(const char *path) {
-  if (prev_dw > 0) {
-    gfx->fillRect(prev_x, prev_y, prev_dw, prev_dh, RGB565_BLACK);
-  }
-  sprite_draw_frame(path, current_frame, 1.7);
-  sprite_get_draw_rect(path, 1.7, &prev_x, &prev_y, &prev_dw, &prev_dh);
+  sprite_draw_frame_buffered(path, current_frame, 1.7, prev_x, prev_y, prev_dw,
+                             prev_dh, &prev_x, &prev_y, &prev_dw, &prev_dh);
 }
 
 void setup() {

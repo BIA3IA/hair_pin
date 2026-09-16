@@ -106,3 +106,90 @@ void sprite_get_draw_rect(const char *path, float scale, int *x, int *y,
   *x = (SCREEN_WIDTH - *dw) / 2;
   *y = (SCREEN_HEIGHT - *dh) / 2;
 }
+
+void rect_union(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh,
+                int *ux, int *uy, int *uw, int *uh) {
+  if (aw <= 0 || ah <= 0) {
+    *ux = bx;
+    *uy = by;
+    *uw = bw;
+    *uh = bh;
+    return;
+  }
+
+  int left = min(ax, bx);
+  int top = min(ay, by);
+  int right = max(ax + aw, bx + bw);
+  int bottom = max(ay + ah, by + bh);
+
+  *ux = left;
+  *uy = top;
+  *uw = right - left;
+  *uh = bottom - top;
+}
+
+void sprite_draw_frame_buffered(const char *path, int frameIndex, float scale,
+                                int prev_x, int prev_y, int prev_dw,
+                                int prev_dh, int *out_x, int *out_y,
+                                int *out_dw, int *out_dh) {
+  File f = LittleFS.open(path, "r");
+  if (!f) {
+    Serial.printf("Impossibile aprire: %s\n", path);
+    return;
+  }
+
+  uint8_t header[6];
+  f.read(header, 6);
+  uint16_t w = header[0] | (header[1] << 8);
+  uint16_t h = header[2] | (header[3] << 8);
+
+  int maskBytes = (w * h + 7) / 8;
+  int pixelBytes = w * h * 2;
+  int frameBytes = maskBytes + pixelBytes;
+
+  f.seek(6 + frameIndex * frameBytes);
+
+  uint8_t *mask = new uint8_t[maskBytes];
+  uint8_t *pixels = new uint8_t[pixelBytes];
+  f.read(mask, maskBytes);
+  f.read(pixels, pixelBytes);
+  f.close();
+
+  int dw = (int)(w * scale);
+  int dh = (int)(h * scale);
+  int x = (SCREEN_WIDTH - dw) / 2;
+  int y = (SCREEN_HEIGHT - dh) / 2;
+
+  int ux, uy, uw, uh;
+  rect_union(prev_x, prev_y, prev_dw, prev_dh, x, y, dw, dh, &ux, &uy, &uw,
+             &uh);
+
+  uint16_t *buffer = new uint16_t[uw * uh];
+  memset(buffer, 0, uw * uh * sizeof(uint16_t)); // 0 = nero in RGB565
+
+  for (int dy = 0; dy < dh; dy++) {
+    int sy = (int)(dy / scale);
+    for (int dx = 0; dx < dw; dx++) {
+      int sx = (int)(dx / scale);
+      int i = sy * w + sx;
+      bool opaque = (mask[i / 8] >> (i % 8)) & 1;
+      if (opaque) {
+        uint16_t color = pixels[i * 2] | (pixels[i * 2 + 1] << 8);
+        int buf_x = (x - ux) + dx;
+        int buf_y = (y - uy) + dy;
+        buffer[buf_y * uw + buf_x] = color;
+      }
+    }
+  }
+
+  gfx->draw16bitRGBBitmap(ux, uy, buffer, uw, uh);
+
+  delete[] mask;
+  delete[] pixels;
+  delete[] buffer;
+
+  *out_x = x;
+  *out_y = y;
+  *out_dw = dw;
+  *out_dh = dh;
+}
