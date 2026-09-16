@@ -37,35 +37,22 @@ SensorState imu_update() {
     float vertical_accel = fabsf(acc.y - 1.0f);
     float gyro_magnitude = sqrtf(gyr.x * gyr.x + gyr.y * gyr.y + gyr.z * gyr.z);
 
-    unsigned long now = millis();
-
-    static float gyro_peak = 0;
-    static unsigned long gyro_peak_time = 0;
-
     static bool tilted = false;
     static bool upside_down = false;
-    static bool shaking = false;
+    static SensorShakeState shake_state = {false, false};
 
     tilted = is_tilted(angle, tilted);
     upside_down = is_upside_down(angle, upside_down);
-    shaking = is_shaking(magnitude, shaking);
+    shake_state = is_shaking(magnitude, gyro_magnitude, shake_state.shaking);
 
     const bool step_detected = step_detection(vertical_accel);
+    const bool walking = is_walking(step_detected, shake_state.rotating);
 
-    if (gyro_magnitude > gyro_peak ||
-        (now - gyro_peak_time) > ROTATION_PEAK_HOLD_MS) {
-      gyro_peak = gyro_magnitude;
-      gyro_peak_time = now;
-    }
-
-    const bool is_rotating = gyro_peak > ROTATION_THRESHOLD;
-    bool is_shaken_signal = shaking || is_rotating;
-    const bool walking = is_walking(step_detected, is_rotating);
-
-    SensorState state = {tilted, upside_down, is_shaken_signal, walking};
+    SensorState state = {tilted, upside_down,
+                         shake_state.shaking || shake_state.rotating, walking};
 
     return state;
   }
 
-  return {false, false, false, false}; // Default state if no data is ready
+  return {false, false, false, false};
 }
