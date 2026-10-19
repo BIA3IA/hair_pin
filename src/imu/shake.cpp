@@ -8,11 +8,12 @@ SensorShakeState is_shaking(float magnitude, float gyro_magnitude,
                             bool currently_shaking) {
   bool shaking = false;
 
-  const float ENTRY_THRESHOLD = 0.4;
-  const float EXIT_THRESHOLD = 0.2;
+  const float ENTRY_THRESHOLD = 0.7;
+  const float EXIT_THRESHOLD = 0.35;
 
   const int ROTATION_PEAK_HOLD_MS = 500;
   const float ROTATION_THRESHOLD = 90.0;
+  const float STRONG_ROTATION_THRESHOLD = 250.0;
 
   unsigned long now = millis();
 
@@ -34,7 +35,8 @@ SensorShakeState is_shaking(float magnitude, float gyro_magnitude,
   }
 
   const bool is_rotating = gyro_peak > ROTATION_THRESHOLD;
+  const bool strong_rotation = gyro_peak > STRONG_ROTATION_THRESHOLD;
 
-  SensorShakeState state = {shaking, is_rotating};
+  SensorShakeState state = {shaking, is_rotating, strong_rotation};
   return state;
 }

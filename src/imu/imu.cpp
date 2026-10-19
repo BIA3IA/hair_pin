@@ -41,7 +41,7 @@ SensorState imu_update() {
 
     static bool tilted = false;
     static bool upside_down = false;
-    static SensorShakeState shake_state = {false, false};
+    static SensorShakeState shake_state = {false, false, false};
 
     tilted = is_tilted(angle, tilted);
     upside_down = is_upside_down(angle, upside_down);
@@ -52,7 +52,7 @@ SensorState imu_update() {
     const bool running = is_running();
 
     last_state = {tilted, upside_down,
-                  shake_state.shaking || shake_state.rotating, walking, running};
+                  shake_state.shaking || shake_state.strong_rotation, walking, running};
   }
 
   return last_state;

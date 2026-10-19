@@ -3,7 +3,8 @@
 
 struct SensorShakeState {
   bool shaking;
-  bool rotating;
+  bool rotating;        // soglia bassa, serve alla camminata
+  bool strong_rotation; // soglia alta, conta come scossa
 };
 
 float accel_magnitude(float ax, float ay, float az);
