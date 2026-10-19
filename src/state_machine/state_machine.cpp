@@ -8,7 +8,11 @@ static unsigned long idle_since = 0;
 
 void state_machine_update(SensorState sensor_state) {
 
-  if (sensor_state.walking) {
+  if (sensor_state.running) {
+    
+    current_state = State::RUNNING;
+
+  } else if (sensor_state.walking) {
 
     current_state = State::WALKING;
 

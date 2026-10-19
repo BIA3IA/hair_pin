@@ -28,7 +28,7 @@ void imu_init() {
 SensorState imu_update() {
   IMUdata acc, gyr;
 
-  static SensorState last_state = {false, false, false, false};
+  static SensorState last_state = {false, false, false, false, false};
 
   if (qmi.getDataReady()) {
     qmi.getAccelerometer(acc.x, acc.y, acc.z);
@@ -49,9 +49,10 @@ SensorState imu_update() {
 
     const bool step_detected = step_detection(vertical_accel);
     const bool walking = is_walking(step_detected, shake_state.rotating);
+    const bool running = is_running();
 
     last_state = {tilted, upside_down,
-                  shake_state.shaking || shake_state.rotating, walking};
+                  shake_state.shaking || shake_state.rotating, walking, running};
   }
 
   return last_state;

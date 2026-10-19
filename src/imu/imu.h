@@ -9,6 +9,7 @@ struct SensorState {
   bool upside_down;
   bool shaking;
   bool walking;
+  bool running;
 };
 
 void imu_init();

@@ -18,6 +18,8 @@ const char *animation_path_for_state(State state) {
     return "/sitting_down/Idle.bin";
   case State::SLEEPING:
     return "/Idle/sleepy.bin";
+  case State::RUNNING:
+  return "/Idle/running.bin";
   default:
     return "/Idle/idle_1.bin";
   }
@@ -42,6 +44,7 @@ bool reverse_on_exit(State state) {
   switch (state) {
   case State::TILTED:
   case State::UPSIDE_DOWN:
+  case State::SHAKEN:
     return true;
   default:
     return false;

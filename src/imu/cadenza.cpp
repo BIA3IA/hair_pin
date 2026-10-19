@@ -1,5 +1,9 @@
 #include "cadenza.h"
 
+static unsigned long prev_interval = 0;
+static bool walking = false;
+
+
 bool is_walking(bool step_this_tick, bool is_rotating) {
   const unsigned long MIN_STEP_INTERVAL_MS = 250;
   const unsigned long MAX_STEP_INTERVAL_MS = 900;
@@ -7,9 +11,7 @@ bool is_walking(bool step_this_tick, bool is_rotating) {
   const unsigned long WALKING_TIMEOUT_MS = 1200;
 
   static unsigned long last_step_time = 0;
-  static unsigned long prev_interval = 0;
   static int consistent_steps = 0;
-  static bool walking = false;
 
   unsigned long now = millis();
 
@@ -56,4 +58,19 @@ bool is_walking(bool step_this_tick, bool is_rotating) {
   }
 
   return walking;
+}
+
+bool is_running() {
+  const unsigned long RUN_ENTRY_MS = 380; // passi più veloci di così inizia a correre
+  const unsigned long RUN_EXIT_MS = 450;  // passi più lenti di così torna a camminare
+  static bool running = false;
+
+  if (!walking || prev_interval == 0) {
+    running = false;
+  } else if (running) {
+    running = prev_interval < RUN_EXIT_MS;
+  } else {
+    running = prev_interval < RUN_ENTRY_MS;
+  }
+  return running;
 }
