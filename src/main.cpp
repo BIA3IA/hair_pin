@@ -40,14 +40,23 @@ int hold_frames_for_state(State state) {
   }
 }
 
-bool reverse_on_exit(State state) {
+enum class ExitMode {
+  CUT,          // cambia subito
+  REVERSE,      // riavvolge fino al frame 0 poi cambia
+  FINISH_CYCLE, // finisce il ciclo in corso poi cambia
+};
+
+ExitMode exit_mode_for_state(State state) {
   switch (state) {
-  case State::TILTED:
-  case State::UPSIDE_DOWN:
-  case State::SHAKEN:
-    return true;
+  case State::WALKING:
+  case State::RUNNING:
+    return ExitMode::FINISH_CYCLE;
+  case State::IDLE:
+  case State::SITTING:
+  case State::SLEEPING:
+    return ExitMode::CUT;
   default:
-    return false;
+    return ExitMode::REVERSE;
   }
 }
 
@@ -126,12 +135,13 @@ void loop() {
   state_machine_update(imu_update());
   State target = state_machine_current();
 
-  if (target != shown_state) {
-    if (reverse_on_exit(shown_state) && current_frame > 0) {
+    if (target != shown_state) {
+    ExitMode mode = exit_mode_for_state(shown_state);
+    if (mode == ExitMode::CUT || current_frame == 0) {
+      start_animation(target);
+    } else if (mode == ExitMode::REVERSE) {
       reversing = true;
       holding = false;
-    } else {
-      start_animation(target);
     }
   } else if (reversing) {
     reversing = false;
