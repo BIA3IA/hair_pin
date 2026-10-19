@@ -26,7 +26,7 @@ const char *animation_path_for_state(State state) {
 static int current_frame = 0;
 static int frame_count = 1;
 static unsigned long last_frame_time = 0;
-const unsigned long FRAME_INTERVAL_MS = 10;
+const unsigned long FRAME_INTERVAL_MS = 100;
 static int prev_x = 0, prev_y = 0, prev_dw = 0, prev_dh = 0;
 
 void draw_animation_frame(const char *path) {

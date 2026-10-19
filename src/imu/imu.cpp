@@ -12,9 +12,9 @@ SensorQMI8658 qmi;
 void imu_init() {
   if (!qmi.begin(Wire, QMI8658_L_SLAVE_ADDRESS, I2C_SDA, I2C_SCL)) {
     Serial.println("QMI8658 non trovato, controlla i collegamenti I2C!");
+    return;
   }
 
-  qmi.begin(Wire, QMI8658_L_SLAVE_ADDRESS, I2C_SDA, I2C_SCL);
   qmi.configAccelerometer(SensorQMI8658::ACC_RANGE_4G,
                           SensorQMI8658::ACC_ODR_1000Hz,
                           SensorQMI8658::LPF_MODE_0);
@@ -27,6 +27,8 @@ void imu_init() {
 
 SensorState imu_update() {
   IMUdata acc, gyr;
+
+  static SensorState last_state = {false, false, false, false};
 
   if (qmi.getDataReady()) {
     qmi.getAccelerometer(acc.x, acc.y, acc.z);
@@ -48,11 +50,9 @@ SensorState imu_update() {
     const bool step_detected = step_detection(vertical_accel);
     const bool walking = is_walking(step_detected, shake_state.rotating);
 
-    SensorState state = {tilted, upside_down,
-                         shake_state.shaking || shake_state.rotating, walking};
-
-    return state;
+    last_state = {tilted, upside_down,
+                  shake_state.shaking || shake_state.rotating, walking};
   }
 
-  return {false, false, false, false};
+  return last_state;
 }
