@@ -145,6 +145,26 @@
               "Idle/animations/get_phone/frame_016.png"
             ]
           },
+          "push": {
+            "direction": "south",
+            "frames": [
+              "Idle/animations/push/frame_000.png",
+              "Idle/animations/push/frame_001.png",
+              "Idle/animations/push/frame_002.png",
+              "Idle/animations/push/frame_003.png",
+              "Idle/animations/push/frame_004.png",
+              "Idle/animations/push/frame_005.png",
+              "Idle/animations/push/frame_006.png",
+              "Idle/animations/push/frame_007.png",
+              "Idle/animations/push/frame_008.png",
+              "Idle/animations/push/frame_009.png",
+              "Idle/animations/push/frame_010.png",
+              "Idle/animations/push/frame_011.png",
+              "Idle/animations/push/frame_012.png",
+              "Idle/animations/push/frame_013.png",
+              "Idle/animations/push/frame_014.png"
+            ]
+          },
           "yanked": {
             "direction": "south",
             "frames": [

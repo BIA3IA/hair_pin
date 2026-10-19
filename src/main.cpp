@@ -2,6 +2,7 @@
 #include "imu/imu.h"
 #include "sprites/sprite.h"
 #include "state_machine/state_machine.h"
+#include "touch/tocchi_display.h"
 #include <Arduino.h>
 
 static const char *current_path = "/Idle/idle_1.bin";
@@ -12,8 +13,8 @@ const char *animation_path_for_state(State state) {
     return "/Idle/walking.bin";
   case State::TILTED: {
     const char *options[] = {"/Idle/lose_balance.bin", "/Idle/equilibrio.bin",
-                             "/Idle/slide.bin"};
-    return options[random(3)];
+                             "/Idle/slide.bin", "/Idle/yanked.bin"};
+    return options[random(4)];
   }
   case State::SHAKEN:
     return "/Idle/shake.bin";
@@ -167,9 +168,17 @@ void play(const char *path) {
   draw_animation_frame(path);
 }
 
+const IdleVariant PUSH = {"/Idle/push.bin", PlayMode::ONCE, 0, 0, 0, 100};
+const IdleVariant BEAT_YOU = {"/Idle/beat_you.bin", PlayMode::HOLD, 3, 1500, 3000, 120};
+
+static bool reacting = false;
+static const IdleVariant *queued = nullptr; // prossimo passo della reazione
+
 void start_animation(State state) {
   shown_state = state;
   variant = nullptr;
+  reacting = false;
+  queued = nullptr;
   play(animation_path_for_state(state));
   Serial.println("Current state: " + String(static_cast<int>(state)));
   if (state == State::IDLE) {
@@ -177,12 +186,24 @@ void start_animation(State state) {
   }
 }
 
-void start_variant() {
-  variant = &IDLE_VARIANTS[random(IDLE_VARIANT_COUNT)];
+void start_variant_step(const IdleVariant *v) {
+  variant = v;
   variant_start = millis();
-  variant_duration = random(variant->min_ms, variant->max_ms);
-  play(variant->path);
+  variant_duration = random(v->min_ms, v->max_ms);
+  play(v->path);
+}
+
+void start_variant() {
+  start_variant_step(&IDLE_VARIANTS[random(IDLE_VARIANT_COUNT)]);
   Serial.printf("Variazione idle: %s\n", variant->path);
+}
+
+void start_reaction() {
+  reacting = true;
+  shown_state = State::ANNOYED;
+  queued = &BEAT_YOU;
+  start_variant_step(&PUSH);
+  Serial.println("Toccata!");
 }
 
 // false quando la variazione e' finita
@@ -221,6 +242,7 @@ void setup() {
   Serial.begin(115200);
   display_init();
   imu_init();
+  touch_init();
   sprite_init();
   start_animation(State::IDLE);
   delay(1000);
@@ -231,7 +253,19 @@ void loop() {
   state_machine_update(imu_update());
   State target = state_machine_current();
 
-  if (target != shown_state) {
+  // la spinta parte solo se e' in piedi tranquilla o sta camminando
+  bool can_be_pushed =
+      !reacting && !reversing &&
+      ((shown_state == State::IDLE && variant == nullptr) ||
+       shown_state == State::WALKING);
+
+  if (touch_tapped() && can_be_pushed) {
+    start_reaction();
+  }
+
+  if (reacting) {
+    // niente, aspetta fine
+  } else if (target != shown_state) {
     ExitMode mode = exit_mode_for_state(shown_state);
     if (mode == ExitMode::CUT || current_frame == 0) {
       start_animation(target);
@@ -256,7 +290,12 @@ void loop() {
   if (millis() - last_frame_time >= interval) {
     if (variant != nullptr) {
       if (!advance_variant()) {
-        start_animation(State::IDLE);
+        if (queued != nullptr) {
+          start_variant_step(queued);
+          queued = nullptr;
+        } else {
+          start_animation(target);
+        }
         return;
       }
     } else if (reversing) {
