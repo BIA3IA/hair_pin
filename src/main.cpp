@@ -4,12 +4,17 @@
 #include "state_machine/state_machine.h"
 #include <Arduino.h>
 
+static const char *current_path = "/Idle/idle_1.bin";
+
 const char *animation_path_for_state(State state) {
   switch (state) {
   case State::WALKING:
     return "/Idle/walking.bin";
-  case State::TILTED:
-    return "/Idle/lose_balance.bin";
+  case State::TILTED: {
+    const char *options[] = {"/Idle/lose_balance.bin", "/Idle/equilibrio.bin",
+                             "/Idle/slide.bin"};
+    return options[random(3)];
+  }
   case State::SHAKEN:
     return "/Idle/shake.bin";
   case State::UPSIDE_DOWN:
@@ -26,7 +31,7 @@ const char *animation_path_for_state(State state) {
 int hold_frames_for_state(State state) {
   switch (state) {
   case State::TILTED:
-    return 5;
+    return strcmp(current_path, "/Idle/equilibrio.bin") == 0 ? 3 : 5;
   case State::SHAKEN:
     return 3;
   case State::UPSIDE_DOWN:
@@ -67,31 +72,58 @@ static int frame_dir = 1;    // +1 avanti, -1 indietro
 static State shown_state = State::IDLE;
 static bool reversing = false;
 
-const char *YAWN_PATH = "/Idle/sleepy.bin";
-const unsigned long YAWN_MIN_MS = 30000; // sbadiglia dopo almeno 30 s di idle...
-const unsigned long YAWN_MAX_MS = 60000; // ...e al massimo dopo 60 s
+enum class PlayMode {
+  ONCE, // una volta, poi idle
+  LOOP, // ripete il ciclo per un po', poi idle
+  HOLD, // ondeggia sugli ultimi frame per un po', poi reverse e idle
+};
 
-static bool yawning = false;               // true = sta sbadigliando
-static unsigned long yawn_timer_start = 0; // da quando contiamo
-static unsigned long yawn_delay = 0;       // quanto aspettare (casuale)
+struct IdleVariant {
+  const char *path;
+  PlayMode mode;
+  int hold_frames;
+  unsigned long min_ms, max_ms; // durata per LOOP e HOLD
+  unsigned long frame_ms;       // velocita': ms per frame
+};
 
+const IdleVariant IDLE_VARIANTS[] = {
+    {"/Idle/sleepy.bin", PlayMode::ONCE, 0, 0, 0, 100},
+    {"/Idle/steady.bin", PlayMode::ONCE, 0, 0, 0, 160},
+    {"/Idle/coffe.bin", PlayMode::ONCE, 0, 0, 0, 200},
+    {"/Idle/thoughtful.bin", PlayMode::ONCE, 0, 0, 0, 200},
+    {"/Idle/no_head.bin", PlayMode::ONCE, 0, 0, 0, 160},
+    {"/Idle/looking_right.bin", PlayMode::ONCE, 0, 0, 0, 160},
+    {"/Idle/idle_2.bin", PlayMode::LOOP, 0, 20000, 40000, 100},
+    {"/Idle/idle_3.bin", PlayMode::LOOP, 0, 20000, 40000, 100},
+    {"/Idle/little_jump_in_place.bin", PlayMode::LOOP, 0, 8000, 15000, 100},
+    {"/Idle/bouncing.bin", PlayMode::LOOP, 0, 8000, 15000, 100},
+    {"/Idle/phone_typing.bin", PlayMode::HOLD, 2, 5000, 10000, 100},
+    {"/Idle/falling_tired.bin", PlayMode::HOLD, 2, 20000, 40000, 100},
+    {"/Idle/dance.bin", PlayMode::HOLD, 3, 2000, 4000, 100},
+    {"/Idle/strange_pose.bin", PlayMode::HOLD, 3, 3000, 6000, 120},
+    {"/Idle/tired.bin", PlayMode::HOLD, 2, 3000, 6000, 140},
+    {"/Idle/get_phone.bin", PlayMode::HOLD, 3, 3000, 6000, 100},
+};
+const int IDLE_VARIANT_COUNT = sizeof(IDLE_VARIANTS) / sizeof(IDLE_VARIANTS[0]);
+
+// ogni quanto parte una variazione mentre e' in idle
+const unsigned long VARIANT_MIN_MS = 15000;
+const unsigned long VARIANT_MAX_MS = 40000;
+
+static const IdleVariant *variant = nullptr; // nullptr = nessuna variazione
+static unsigned long variant_start = 0;
+static unsigned long variant_duration = 0;
+static unsigned long variant_timer_start = 0;
+static unsigned long variant_delay = 0;
 
 void draw_animation_frame(const char *path) {
   sprite_draw_frame_buffered(path, current_frame, 1.7, prev_x, prev_y, prev_dw,
                              prev_dh, &prev_x, &prev_y, &prev_dw, &prev_dh);
 }
 
-void schedule_next_yawn() {
-  yawn_timer_start = millis();
-  yawn_delay = random(YAWN_MIN_MS, YAWN_MAX_MS);
-}
-
-void start_yawn() {
-  yawning = true;
-  frame_count = sprite_get_frame_count(YAWN_PATH);
-  current_frame = 0;
-  last_frame_time = millis();
-  draw_animation_frame(YAWN_PATH);
+void schedule_next_variant() {
+  variant_timer_start = millis();
+  variant_delay = random(VARIANT_MIN_MS, VARIANT_MAX_MS);
 }
 
 void advance_frame(int hold) {
@@ -124,9 +156,8 @@ void advance_frame(int hold) {
   }
 }
 
-void start_animation(State state) {
-  shown_state = state;
-  const char *path = animation_path_for_state(state);
+void play(const char *path) {
+  current_path = path;
   frame_count = sprite_get_frame_count(path);
   current_frame = 0;
   holding = false;
@@ -134,12 +165,56 @@ void start_animation(State state) {
   reversing = false;
   last_frame_time = millis();
   draw_animation_frame(path);
-  Serial.println("Current state: " + String(static_cast<int>(state)));
-  yawning = false;
-  if (state == State::IDLE) {
-    schedule_next_yawn(); // ogni volta che torna in idle riparte il conto
-  }
+}
 
+void start_animation(State state) {
+  shown_state = state;
+  variant = nullptr;
+  play(animation_path_for_state(state));
+  Serial.println("Current state: " + String(static_cast<int>(state)));
+  if (state == State::IDLE) {
+    schedule_next_variant();
+  }
+}
+
+void start_variant() {
+  variant = &IDLE_VARIANTS[random(IDLE_VARIANT_COUNT)];
+  variant_start = millis();
+  variant_duration = random(variant->min_ms, variant->max_ms);
+  play(variant->path);
+  Serial.printf("Variazione idle: %s\n", variant->path);
+}
+
+// false quando la variazione e' finita
+bool advance_variant() {
+  bool time_up = millis() - variant_start >= variant_duration;
+
+  switch (variant->mode) {
+  case PlayMode::ONCE:
+    current_frame++;
+    return current_frame < frame_count;
+
+  case PlayMode::LOOP:
+    current_frame++;
+    if (current_frame < frame_count) {
+      return true;
+    }
+    current_frame = 0;
+    return !time_up;
+
+  case PlayMode::HOLD:
+    if (reversing) {
+      current_frame--;
+      return current_frame >= 0;
+    }
+    advance_frame(variant->hold_frames);
+    if (holding && time_up) {
+      reversing = true;
+      holding = false;
+    }
+    return true;
+  }
+  return false;
 }
 
 void setup() {
@@ -164,35 +239,33 @@ void loop() {
       reversing = true;
       holding = false;
     }
-  } else if (reversing) {
-    reversing = false;
-    frame_dir = 1;
-  } else if (shown_state == State::IDLE && !yawning &&
-             millis() - yawn_timer_start >= yawn_delay) {
-    start_yawn();
+  } else if (variant == nullptr) {
+    if (reversing) {
+      reversing = false;
+      frame_dir = 1;
+    } else if (shown_state == State::IDLE &&
+               millis() - variant_timer_start >= variant_delay) {
+      start_variant();
+    }
   }
 
-
-  unsigned long interval = holding ? HOLD_FRAME_INTERVAL_MS : FRAME_INTERVAL_MS;
+  unsigned long interval = holding             ? HOLD_FRAME_INTERVAL_MS
+                           : variant != nullptr ? variant->frame_ms
+                                                : FRAME_INTERVAL_MS;
 
   if (millis() - last_frame_time >= interval) {
-    if (yawning) {
-      current_frame++;
-      if (current_frame >= frame_count) {
-        start_animation(State::IDLE); // sbadiglio finito: torna in idle
+    if (variant != nullptr) {
+      if (!advance_variant()) {
+        start_animation(State::IDLE);
         return;
       }
-      last_frame_time = millis();
-      draw_animation_frame(YAWN_PATH);
+    } else if (reversing) {
+      current_frame--;
     } else {
-      if (reversing) {
-        current_frame--;
-      } else {
-        advance_frame(hold_frames_for_state(shown_state));
-      }
-      last_frame_time = millis();
-      draw_animation_frame(animation_path_for_state(shown_state));
+      advance_frame(hold_frames_for_state(shown_state));
     }
+    last_frame_time = millis();
+    draw_animation_frame(current_path);
   }
 
   delay(20);
