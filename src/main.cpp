@@ -38,6 +38,15 @@ int hold_frames_for_state(State state) {
   }
 }
 
+bool reverse_on_exit(State state) {
+  switch (state) {
+  case State::TILTED:
+  case State::UPSIDE_DOWN:
+    return true;
+  default:
+    return false;
+  }
+}
 
 static int current_frame = 0;
 static int frame_count = 1;
@@ -48,6 +57,9 @@ static int prev_x = 0, prev_y = 0, prev_dw = 0, prev_dh = 0;
 const unsigned long HOLD_FRAME_INTERVAL_MS = 180; // più lento su finale
 static bool holding = false; // true = avanti-indietro
 static int frame_dir = 1;    // +1 avanti, -1 indietro
+
+static State shown_state = State::IDLE;
+static bool reversing = false;
 
 void draw_animation_frame(const char *path) {
   sprite_draw_frame_buffered(path, current_frame, 1.7, prev_x, prev_y, prev_dw,
@@ -84,6 +96,19 @@ void advance_frame(int hold) {
   }
 }
 
+void start_animation(State state) {
+  shown_state = state;
+  const char *path = animation_path_for_state(state);
+  frame_count = sprite_get_frame_count(path);
+  current_frame = 0;
+  holding = false;
+  frame_dir = 1;
+  reversing = false;
+  last_frame_time = millis();
+  draw_animation_frame(path);
+  Serial.println("Current state: " + String(static_cast<int>(state)));
+}
+
 void setup() {
   Serial.begin(115200);
   display_init();
@@ -95,32 +120,31 @@ void setup() {
 }
 
 void loop() {
-
-  State previous_state = state_machine_current();
-
   state_machine_update(imu_update());
+  State target = state_machine_current();
 
-  State current_state = state_machine_current();
-
-  const char *path = animation_path_for_state(current_state);
-
-  if (current_state != previous_state) {
-    frame_count = sprite_get_frame_count(path);
-    current_frame = 0;
-    holding = false;
+  if (target != shown_state) {
+    if (reverse_on_exit(shown_state) && current_frame > 0) {
+      reversing = true;
+      holding = false;
+    } else {
+      start_animation(target);
+    }
+  } else if (reversing) {
+    reversing = false;
     frame_dir = 1;
-
-    last_frame_time = millis();
-    draw_animation_frame(path);
-    // sprite_draw_frame(path, current_frame, 1.7);
-    Serial.println("Current state: " + String(static_cast<int>(current_state)));
-     } else if (millis() - last_frame_time >=
-             (holding ? HOLD_FRAME_INTERVAL_MS : FRAME_INTERVAL_MS)) {
-    advance_frame(hold_frames_for_state(current_state));
-    last_frame_time = millis();
-    draw_animation_frame(path);
   }
 
+  unsigned long interval = holding ? HOLD_FRAME_INTERVAL_MS : FRAME_INTERVAL_MS;
+  if (millis() - last_frame_time >= interval) {
+    if (reversing) {
+      current_frame--;
+    } else {
+      advance_frame(hold_frames_for_state(shown_state));
+    }
+    last_frame_time = millis();
+    draw_animation_frame(animation_path_for_state(shown_state));
+  }
 
   delay(20);
 }
