@@ -9,13 +9,17 @@ const buffer = fs.readFileSync(inputFile);
 const width = buffer.readUInt16LE(0);
 const height = buffer.readUInt16LE(2);
 const frameCount = buffer.readUInt16LE(4);
-console.log({ width, height, frameCount });
+const canvasW = buffer.readUInt16LE(6);
+const canvasH = buffer.readUInt16LE(8);
+const offsetX = buffer.readUInt16LE(10);
+const offsetY = buffer.readUInt16LE(12);
+console.log({ width, height, frameCount, canvasW, canvasH, offsetX, offsetY });
 
 const maskBytes = Math.ceil((width * height) / 8);
 const pixelsBytes = width * height * 2;
 const frameBytes = maskBytes + pixelsBytes;
 
-const frameStart = 6 + frameIndex * frameBytes;
+const frameStart = 14 + frameIndex * frameBytes;
 const mask = buffer.subarray(frameStart, frameStart + maskBytes);
 const pixels = buffer.subarray(frameStart + maskBytes, frameStart + frameBytes);
 

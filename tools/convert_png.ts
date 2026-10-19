@@ -77,16 +77,22 @@ function loadAnimationPngs(frameFiles: string[]): PNG[] {
 }
 
 // Costruisce il file binario di un'intera animazione, ritagliata al bbox
-// comune: header (width, height, frameCount) + per ogni frame (maschera + RGB565).
+// comune: header (width, height, frameCount, canvasW, canvasH, offsetX,
+// offsetY) + per ogni frame (maschera + RGB565).
 function buildAnimationFile(pngs: PNG[]): Buffer {
   const bbox = computeBoundingBox(pngs);
   const width = bbox.maxX - bbox.minX + 1;
   const height = bbox.maxY - bbox.minY + 1;
 
-  const header = Buffer.alloc(6); // 3 x uint16 = 6 byte
+  const header = Buffer.alloc(14); // 7 x uint16 = 14 byte
   header.writeUInt16LE(width, 0);
   header.writeUInt16LE(height, 2);
   header.writeUInt16LE(pngs.length, 4);
+  // tela originale e posizione del ritaglio, servono per allineare le animazioni
+  header.writeUInt16LE(pngs[0].width, 6);
+  header.writeUInt16LE(pngs[0].height, 8);
+  header.writeUInt16LE(bbox.minX, 10);
+  header.writeUInt16LE(bbox.minY, 12);
 
   const frameBuffers = pngs.map((png) => {
     const mask = buildMask(png, bbox);

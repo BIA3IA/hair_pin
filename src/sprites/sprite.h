@@ -3,6 +3,15 @@
 #define SCREEN_WIDTH 280
 #define SCREEN_HEIGHT 240
 
+#define SPRITE_HEADER_SIZE 14
+
+struct SpriteHeader {
+  uint16_t w, h;
+  uint16_t frame_count;
+  uint16_t canvas_w, canvas_h;
+  uint16_t offset_x, offset_y; // dove inizia il ritaglio nella tela
+};
+
 void sprite_init();
 void sprite_draw_frame(const char *path, int frameIndex, float scale);
 int sprite_get_frame_count(const char *path);

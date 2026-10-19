@@ -2,6 +2,31 @@
 #include "../display/display.h"
 #include <LittleFS.h>
 
+static SpriteHeader read_header(File &f) {
+  uint8_t b[SPRITE_HEADER_SIZE];
+  f.read(b, SPRITE_HEADER_SIZE);
+  SpriteHeader hd;
+  hd.w = b[0] | (b[1] << 8); // little-endian: byte basso prima
+  hd.h = b[2] | (b[3] << 8);
+  hd.frame_count = b[4] | (b[5] << 8);
+  hd.canvas_w = b[6] | (b[7] << 8);
+  hd.canvas_h = b[8] | (b[9] << 8);
+  hd.offset_x = b[10] | (b[11] << 8);
+  hd.offset_y = b[12] | (b[13] << 8);
+  return hd;
+}
+
+// centra la tela originale, non il ritaglio
+static void screen_rect(const SpriteHeader &hd, float scale, int *x, int *y,
+                        int *dw, int *dh) {
+  *dw = (int)(hd.w * scale);
+  *dh = (int)(hd.h * scale);
+  *x = (SCREEN_WIDTH - (int)(hd.canvas_w * scale)) / 2 +
+       (int)(hd.offset_x * scale);
+  *y = (SCREEN_HEIGHT - (int)(hd.canvas_h * scale)) / 2 +
+       (int)(hd.offset_y * scale);
+}
+
 void sprite_init() {
   if (!LittleFS.begin()) {
     Serial.println("Errore montaggio LittleFS!");
@@ -14,15 +39,12 @@ void sprite_init() {
     return;
   }
 
-  uint8_t header[6];
-  f.read(header, 6);
+  SpriteHeader hd = read_header(f);
   f.close();
 
-  uint16_t width =
-      header[0] | (header[1] << 8); // little-endian: byte basso prima
-  uint16_t height = header[2] | (header[3] << 8);
-  uint16_t frameCount = header[4] | (header[5] << 8);
-  Serial.printf("width=%d height=%d frames=%d\n", width, height, frameCount);
+  Serial.printf("width=%d height=%d frames=%d canvas=%dx%d offset=%d,%d\n",
+                hd.w, hd.h, hd.frame_count, hd.canvas_w, hd.canvas_h,
+                hd.offset_x, hd.offset_y);
 }
 
 void sprite_draw_frame(const char *path, int frameIndex, float scale) {
@@ -32,16 +54,15 @@ void sprite_draw_frame(const char *path, int frameIndex, float scale) {
     return;
   }
 
-  uint8_t header[6];
-  f.read(header, 6);
-  uint16_t w = header[0] | (header[1] << 8);
-  uint16_t h = header[2] | (header[3] << 8);
+  SpriteHeader hd = read_header(f);
+  uint16_t w = hd.w;
+  uint16_t h = hd.h;
 
   int maskBytes = (w * h + 7) / 8;
   int pixelBytes = w * h * 2;
   int frameBytes = maskBytes + pixelBytes;
 
-  f.seek(6 + frameIndex * frameBytes);
+  f.seek(SPRITE_HEADER_SIZE + frameIndex * frameBytes);
 
   uint8_t *mask = new uint8_t[maskBytes];
   uint8_t *pixels = new uint8_t[pixelBytes];
@@ -49,11 +70,8 @@ void sprite_draw_frame(const char *path, int frameIndex, float scale) {
   f.read(pixels, pixelBytes);
   f.close();
 
-  int dw = (int)(w * scale); // larghezza finale a schermo
-  int dh = (int)(h * scale); // altezza finale a schermo
-
-  int x = (SCREEN_WIDTH - dw) / 2;
-  int y = (SCREEN_HEIGHT - dh) / 2;
+  int x, y, dw, dh;
+  screen_rect(hd, scale, &x, &y, &dw, &dh);
 
   gfx->startWrite();
   for (int dy = 0; dy < dh; dy++) {
@@ -79,11 +97,10 @@ int sprite_get_frame_count(const char *path) {
   if (!f)
     return 1;
 
-  uint8_t header[6];
-  f.read(header, 6);
+  SpriteHeader hd = read_header(f);
   f.close();
 
-  return header[4] | (header[5] << 8);
+  return hd.frame_count;
 }
 
 void sprite_get_draw_rect(const char *path, float scale, int *x, int *y,
@@ -94,17 +111,10 @@ void sprite_get_draw_rect(const char *path, float scale, int *x, int *y,
     return;
   }
 
-  uint8_t header[6];
-  f.read(header, 6);
+  SpriteHeader hd = read_header(f);
   f.close();
 
-  uint16_t w = header[0] | (header[1] << 8);
-  uint16_t h = header[2] | (header[3] << 8);
-
-  *dw = (int)(w * scale);
-  *dh = (int)(h * scale);
-  *x = (SCREEN_WIDTH - *dw) / 2;
-  *y = (SCREEN_HEIGHT - *dh) / 2;
+  screen_rect(hd, scale, x, y, dw, dh);
 }
 
 void rect_union(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh,
@@ -138,16 +148,15 @@ void sprite_draw_frame_buffered(const char *path, int frameIndex, float scale,
     return;
   }
 
-  uint8_t header[6];
-  f.read(header, 6);
-  uint16_t w = header[0] | (header[1] << 8);
-  uint16_t h = header[2] | (header[3] << 8);
+  SpriteHeader hd = read_header(f);
+  uint16_t w = hd.w;
+  uint16_t h = hd.h;
 
   int maskBytes = (w * h + 7) / 8;
   int pixelBytes = w * h * 2;
   int frameBytes = maskBytes + pixelBytes;
 
-  f.seek(6 + frameIndex * frameBytes);
+  f.seek(SPRITE_HEADER_SIZE + frameIndex * frameBytes);
 
   uint8_t *mask = new uint8_t[maskBytes];
   uint8_t *pixels = new uint8_t[pixelBytes];
@@ -155,10 +164,8 @@ void sprite_draw_frame_buffered(const char *path, int frameIndex, float scale,
   f.read(pixels, pixelBytes);
   f.close();
 
-  int dw = (int)(w * scale);
-  int dh = (int)(h * scale);
-  int x = (SCREEN_WIDTH - dw) / 2;
-  int y = (SCREEN_HEIGHT - dh) / 2;
+  int x, y, dw, dh;
+  screen_rect(hd, scale, &x, &y, &dw, &dh);
 
   int ux, uy, uw, uh;
   rect_union(prev_x, prev_y, prev_dw, prev_dh, x, y, dw, dh, &ux, &uy, &uw,
