@@ -2,9 +2,6 @@
 
 static State current_state = State::IDLE;
 
-static const unsigned long SITTING_THRESHOLD_MS = 10000;
-static const unsigned long SLEEPING_THRESHOLD_MS = 30000;
-static unsigned long idle_since = 0;
 static const unsigned long SLOWDOWN_MS = 1500; // quanto camminare dopo aver corso
 static unsigned long last_running_time = 0;
 
@@ -36,18 +33,8 @@ void state_machine_update(SensorState sensor_state) {
     current_state = State::WALKING; // stava correndo da poco: rallenta camminando
   } else {
 
-    if (current_state != State::IDLE && current_state != State::SITTING &&
-        current_state != State::SLEEPING) {
-      current_state = State::IDLE;
-      idle_since = millis();
-    }
+    current_state = State::IDLE;
 
-    unsigned long idle_duration = millis() - idle_since;
-    if (idle_duration >= SLEEPING_THRESHOLD_MS) {
-      current_state = State::SLEEPING;
-    } else if (idle_duration >= SITTING_THRESHOLD_MS) {
-      current_state = State::SITTING;
-    }
   }
 }
 

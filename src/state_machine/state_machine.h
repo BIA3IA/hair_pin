@@ -9,8 +9,6 @@ enum class State {
   TILTED,
   SHAKEN,
   UPSIDE_DOWN,
-  SITTING,
-  SLEEPING,
   ANNOYED,
   NOTIFICATION
 };

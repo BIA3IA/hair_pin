@@ -14,12 +14,8 @@ const char *animation_path_for_state(State state) {
     return "/Idle/shake.bin";
   case State::UPSIDE_DOWN:
     return "/Idle/upsidedown.bin";
-  case State::SITTING:
-    return "/sitting_down/Idle.bin";
-  case State::SLEEPING:
-    return "/Idle/sleepy.bin";
   case State::RUNNING:
-  return "/Idle/running.bin";
+    return "/Idle/running.bin";
   default:
     return "/Idle/idle_1.bin";
   }
@@ -52,8 +48,6 @@ ExitMode exit_mode_for_state(State state) {
   case State::RUNNING:
     return ExitMode::FINISH_CYCLE;
   case State::IDLE:
-  case State::SITTING:
-  case State::SLEEPING:
     return ExitMode::CUT;
   default:
     return ExitMode::REVERSE;
@@ -73,9 +67,31 @@ static int frame_dir = 1;    // +1 avanti, -1 indietro
 static State shown_state = State::IDLE;
 static bool reversing = false;
 
+const char *YAWN_PATH = "/Idle/sleepy.bin";
+const unsigned long YAWN_MIN_MS = 30000; // sbadiglia dopo almeno 30 s di idle...
+const unsigned long YAWN_MAX_MS = 60000; // ...e al massimo dopo 60 s
+
+static bool yawning = false;               // true = sta sbadigliando
+static unsigned long yawn_timer_start = 0; // da quando contiamo
+static unsigned long yawn_delay = 0;       // quanto aspettare (casuale)
+
+
 void draw_animation_frame(const char *path) {
   sprite_draw_frame_buffered(path, current_frame, 1.7, prev_x, prev_y, prev_dw,
                              prev_dh, &prev_x, &prev_y, &prev_dw, &prev_dh);
+}
+
+void schedule_next_yawn() {
+  yawn_timer_start = millis();
+  yawn_delay = random(YAWN_MIN_MS, YAWN_MAX_MS);
+}
+
+void start_yawn() {
+  yawning = true;
+  frame_count = sprite_get_frame_count(YAWN_PATH);
+  current_frame = 0;
+  last_frame_time = millis();
+  draw_animation_frame(YAWN_PATH);
 }
 
 void advance_frame(int hold) {
@@ -119,6 +135,11 @@ void start_animation(State state) {
   last_frame_time = millis();
   draw_animation_frame(path);
   Serial.println("Current state: " + String(static_cast<int>(state)));
+  yawning = false;
+  if (state == State::IDLE) {
+    schedule_next_yawn(); // ogni volta che torna in idle riparte il conto
+  }
+
 }
 
 void setup() {
@@ -126,7 +147,7 @@ void setup() {
   display_init();
   imu_init();
   sprite_init();
-  sprite_draw_frame("/Idle/idle_1.bin", 0, 1.7);
+  start_animation(State::IDLE);
   delay(1000);
   Serial.println("Bianca clip: ciao mondo, firmware vivo!");
 }
@@ -135,7 +156,7 @@ void loop() {
   state_machine_update(imu_update());
   State target = state_machine_current();
 
-    if (target != shown_state) {
+  if (target != shown_state) {
     ExitMode mode = exit_mode_for_state(shown_state);
     if (mode == ExitMode::CUT || current_frame == 0) {
       start_animation(target);
@@ -146,17 +167,32 @@ void loop() {
   } else if (reversing) {
     reversing = false;
     frame_dir = 1;
+  } else if (shown_state == State::IDLE && !yawning &&
+             millis() - yawn_timer_start >= yawn_delay) {
+    start_yawn();
   }
 
+
   unsigned long interval = holding ? HOLD_FRAME_INTERVAL_MS : FRAME_INTERVAL_MS;
+
   if (millis() - last_frame_time >= interval) {
-    if (reversing) {
-      current_frame--;
+    if (yawning) {
+      current_frame++;
+      if (current_frame >= frame_count) {
+        start_animation(State::IDLE); // sbadiglio finito: torna in idle
+        return;
+      }
+      last_frame_time = millis();
+      draw_animation_frame(YAWN_PATH);
     } else {
-      advance_frame(hold_frames_for_state(shown_state));
+      if (reversing) {
+        current_frame--;
+      } else {
+        advance_frame(hold_frames_for_state(shown_state));
+      }
+      last_frame_time = millis();
+      draw_animation_frame(animation_path_for_state(shown_state));
     }
-    last_frame_time = millis();
-    draw_animation_frame(animation_path_for_state(shown_state));
   }
 
   delay(20);
