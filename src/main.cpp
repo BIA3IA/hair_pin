@@ -254,10 +254,11 @@ void loop() {
   State target = state_machine_current();
 
   // la spinta parte solo se e' in piedi tranquilla o sta camminando
-  bool can_be_pushed =
-      !reacting && !reversing &&
-      ((shown_state == State::IDLE && variant == nullptr) ||
-       shown_state == State::WALKING);
+  // (le variazioni HOLD sono quelle a terra, al telefono, che ballano...)
+  bool calm_idle = shown_state == State::IDLE &&
+                   (variant == nullptr || variant->mode != PlayMode::HOLD);
+  bool can_be_pushed = !reacting && !reversing &&
+                       (calm_idle || shown_state == State::WALKING);
 
   if (touch_tapped() && can_be_pushed) {
     start_reaction();
