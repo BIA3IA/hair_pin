@@ -107,14 +107,15 @@ const IdleVariant IDLE_VARIANTS[] = {
     {"/Idle/falling_tired.bin", PlayMode::HOLD, 1, 20000, 40000, 100},
     {"/Idle/dance.bin", PlayMode::HOLD, 3, 2000, 4000, 100},
     {"/Idle/strange_pose.bin", PlayMode::HOLD, 3, 3000, 6000, 120},
-    {"/Idle/tired.bin", PlayMode::HOLD, 2, 3000, 6000, 140},
     {"/Idle/get_phone.bin", PlayMode::HOLD, 3, 3000, 6000, 100},
+    {"/Idle/pull_frame_glow.bin", PlayMode::HOLD, 3, 3000, 5000, 100},
+    {"/Idle/pull_orb.bin", PlayMode::HOLD, 3, 3000, 5000, 100},
 };
 const int IDLE_VARIANT_COUNT = sizeof(IDLE_VARIANTS) / sizeof(IDLE_VARIANTS[0]);
 
 // ogni quanto parte una variazione mentre e' in idle
-const unsigned long VARIANT_MIN_MS = 15000;
-const unsigned long VARIANT_MAX_MS = 40000;
+const unsigned long VARIANT_MIN_MS = 2000; // TEMP prova, era 15000
+const unsigned long VARIANT_MAX_MS = 4000; // TEMP prova, era 40000
 
 static const IdleVariant *variant = nullptr; // nullptr = nessuna variazione
 static unsigned long variant_start = 0;
@@ -176,14 +177,14 @@ void play(const char *path, bool from_end = false) {
 const IdleVariant PUSH = {"/Idle/push.bin", PlayMode::ONCE, 0, 0, 0, 100};
 const IdleVariant BEAT_YOU = {"/Idle/beat_you.bin", PlayMode::HOLD, 3, 1500, 3000, 120};
 
-// cartello: lo alza (abbassare al contrario), frase, lo abbassa
-const IdleVariant SIGN_UP = {"/wooden_frame/lower_sign.bin", PlayMode::BACKWARD, 0, 0, 0, 100};
-const IdleVariant SIGN_HOLD = {"/wooden_frame/Idle.bin", PlayMode::SIGN, 0, 5000, 8000, 100};
-const IdleVariant SIGN_DOWN = {"/wooden_frame/lower_sign.bin", PlayMode::ONCE, 0, 0, 0, 100};
-const int SIGN_CHANCE = 30; // % delle variazioni che sono un cartello
+// cartoncino: lo tira fuori, frase sull'ultimo frame, lo rimette via
+const IdleVariant SIGN_UP = {"/Idle/pull_card.bin", PlayMode::ONCE, 0, 0, 0, 100};
+const IdleVariant SIGN_HOLD = {"/Idle/pull_card.bin", PlayMode::SIGN, 0, 5000, 8000, 100};
+const IdleVariant SIGN_DOWN = {"/Idle/pull_card.bin", PlayMode::BACKWARD, 0, 0, 0, 100};
+const int SIGN_CHANCE = 50; // % delle variazioni che sono un cartello. TEMP prova, era 30
 
-// zona bianca del cartello in Idle.bin, in pixel della tela originale
-const int SIGN_X = 49, SIGN_Y = 72, SIGN_W = 68, SIGN_H = 39;
+// zona bianca del cartoncino nell'ultimo frame, in pixel della tela originale
+const int SIGN_X = 58, SIGN_Y = 63, SIGN_W = 53, SIGN_H = 33; // tutto il cartoncino, da cornice a cornice
 
 static bool reacting = false;
 
@@ -218,7 +219,8 @@ void start_variant_step(const IdleVariant *v) {
   variant = v;
   variant_start = millis();
   variant_duration = random(v->min_ms, v->max_ms);
-  play(v->path, v->mode == PlayMode::BACKWARD);
+  play(v->path,
+       v->mode == PlayMode::BACKWARD || v->mode == PlayMode::SIGN);
   if (v->mode == PlayMode::SIGN) {
     draw_sign_phrase();
   }
@@ -305,6 +307,7 @@ void setup() {
   touch_init();
   rtc_init();
   sprite_init();
+  sign_check_phrases((int)(SIGN_W * SPRITE_SCALE), (int)(SIGN_H * SPRITE_SCALE));
   start_animation(State::IDLE);
   delay(1000);
   Serial.println("Bianca clip: ciao mondo, firmware vivo!");

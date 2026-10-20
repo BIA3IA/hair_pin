@@ -8,54 +8,43 @@ struct Phrase {
 };
 
 const Phrase PHRASES[] = {
-    {"Ho fame", 12, 14},
-    {"Ho fame", 19, 21},
-    {"CAFFÈ", 7, 11},
-    {"CAFFÈ", 14, 16},
-    {"Datemi un caffè", 7, 11},
-    {"Datemi un caffè", 14, 16},
-    {"Sono stanca", 22, 4},
-    {"Che fatica", 22, 4},
-    {"Ancora viva", 23, 4},
-    {"SOPRAVVIVO", 23, 4},
-
+    {"FAME", 12, 14},
+    {"FAME", 19, 21},
+    {"CAFFÈ", -1, -1},
+    {"Sono stanca", -1, -1},
+    {"Che fatica", -1, -1},
+    {"Ancora viva", -1, -1},
+    {"SOPRAVVIVO", -1, -1},
     {"RYUK", -1, -1},
-    {"Dov'è Ryuk", -1, -1},
-    {"GATTO", -1, -1},
+    {"Dov'è Ryuk?", -1, -1},
+    {"GATTO?", -1, -1},
     {"ESISTO?", -1, -1},
     {"Dove sono?", -1, -1},
     {"Chi sono?", -1, -1},
-    {"Aiuto boh", -1, -1},
-    {"BOH", -1, -1},
     {"EH?", -1, -1},
     {"PERCHÉ?", -1, -1},
     {"Ma quindi?", -1, -1},
-    {"Che ansia", -1, -1},
     {"ANSIA", -1, -1},
-    {"No vabbè", -1, -1},
+    {"vabbè", -1, -1},
     {"Non so", -1, -1},
-    {"Mi dissocio", -1, -1},
     {"Sto pensando", -1, -1},
-    {"FORSE", -1, -1},
-    {"Forse no", -1, -1},
-    {"Io sparisco", -1, -1},
-    {"Vi osservo", -1, -1},
-    {"Vi sto osservando", -1, -1},
-    {"Ti vedo", -1, -1},
+    {"FORSE?", -1, -1},
+    {"FORSE NO?", -1, -1},
+    {"SPARISCO", -1, -1},
+    {"VI OSSERVO", -1, -1},
+    {"TI VEDO", -1, -1},
     {"Pessima idea", -1, -1},
     {"Scelta dubbia", -1, -1},
     {"Brutta idea", -1, -1},
     {"Che sbatti", -1, -1},
-    {"Ho perso", -1, -1},
     {"Dov'è finito", -1, -1},
-    {"Dove l'ho messo", -1, -1},
     {"Dove ho messo?", -1, -1},
     {"Ho dimenticato qualcosa?", -1, -1},
     {"Ero convinta", -1, -1},
     {"Aspetta un attimo", -1, -1},
     {"Un secondo", -1, -1},
     {"Che giorno è", -1, -1},
-    {"Io boh", -1, -1},
+    {"BOH", -1, -1},
     {"PANICO", -1, -1},
     {"GATTO.EXE", -1, -1},
     {"BIANCA.EXE", -1, -1},
@@ -63,10 +52,9 @@ const Phrase PHRASES[] = {
     {"LOADING...", -1, -1},
     {"BUFFERING", -1, -1},
     {"PENSIERI", -1, -1},
-    {"OVERTHINKING", -1, -1},
+    {"OVER-\nTHINKING", -1, -1},
     {"Quasi bene", -1, -1},
     {"MIAO", -1, -1},
-    {"Boh raga", -1, -1},
     {"MAH", -1, -1},
     {"UFFA", -1, -1},
     {"Risolvo dopo", -1, -1},
@@ -74,10 +62,29 @@ const Phrase PHRASES[] = {
 const int PHRASE_COUNT = sizeof(PHRASES) / sizeof(PHRASES[0]);
 
 const uint16_t SIGN_TEXT_COLOR = 0x18C3; // quasi nero
-const int CHAR_W = 8;                    // unifont: lettere larghe 8 px
-const int LINE_H = 16;
 const int MAX_LINES = 4;
 const int MAX_LINE_BYTES = 48;
+const int SIDE_MARGIN = 4; // px liberi a destra e a sinistra della scritta
+
+struct TextStyle {
+  const uint8_t *font;
+  uint8_t scale;
+  int line_h, baseline;
+  int bold_x, bold_y; // ripassa la scritta spostata di questi px, per ingrossarla
+};
+
+// si prova dal piu' grande al piu' piccolo, vince il primo in cui la frase ci sta
+// enorme: 5x8 ingrandito 3 volte, una riga sola (BOH, MIAO, GATTO...)
+const TextStyle HUGE = {u8g2_font_5x8_tf, 3, 24, 21, 1, 1};
+// grande: 5x8 ingrandito 2 volte, due righe
+const TextStyle BIG = {u8g2_font_5x8_tf, 2, 16, 14, 1, 1};
+// medio: grassetto vero, due righe
+const TextStyle MEDIUM = {u8g2_font_helvB10_tf, 1, 16, 13, 1, 0};
+// piccolo: grassetto vero, tre righe, per le frasi lunghe
+const TextStyle SMALL = {u8g2_font_helvB08_tf, 1, 11, 10, 0, 0};
+
+const TextStyle *STYLES[] = {&HUGE, &BIG, &MEDIUM, &SMALL};
+const int STYLE_COUNT = sizeof(STYLES) / sizeof(STYLES[0]);
 
 static int last_phrase = -1;
 
@@ -119,52 +126,117 @@ const char *sign_pick_phrase(int hour) {
   return PHRASES[last_phrase].text;
 }
 
-// lettere vere, non byte: "è" occupa 2 byte ma e' una lettera sola
-static int utf8_len(const char *s) {
-  int n = 0;
-  for (; *s; s++) {
-    if ((*s & 0xC0) != 0x80) {
-      n++;
-    }
-  }
-  return n;
+static void use_style(const TextStyle &st) {
+  gfx->setFont(st.font);
+  gfx->setTextSize(st.scale);
+  gfx->setUTF8Print(true);
 }
 
-void sign_draw_text(const char *text, int x, int y, int w, int h) {
-  char lines[MAX_LINES][MAX_LINE_BYTES] = {};
-  int line_count = 1;
-  int max_chars = w / CHAR_W;
+static int text_width(const char *s, const TextStyle &st) {
+  int16_t x1, y1;
+  uint16_t w, h;
+  gfx->getTextBounds(s, 0, 0, &x1, &y1, &w, &h);
+  return w + st.bold_x;
+}
 
-  // va a capo tra una parola e l'altra
+// va a capo tra una parola e l'altra; false se in quello stile non ci sta
+static bool wrap(const char *text, const TextStyle &st, int w, int h,
+                 char lines[MAX_LINES][MAX_LINE_BYTES], int *line_count) {
+  use_style(st);
+  int max_lines = min(MAX_LINES, h / st.line_h);
+  memset(lines, 0, MAX_LINES * MAX_LINE_BYTES);
+  *line_count = 1;
+  bool fits = true;
+
+  // "\n" nella frase = vai a capo qui (anche dentro una parola: "OVER-\nTHINKING")
+  bool force_break = false;
   const char *p = text;
   while (*p) {
-    const char *space = strchr(p, ' ');
-    int word_bytes = space ? space - p : strlen(p);
+    int word_bytes = strcspn(p, " \n");
+    char separator = p[word_bytes];
     char word[MAX_LINE_BYTES] = {};
     strncpy(word, p, min(word_bytes, MAX_LINE_BYTES - 1));
 
-    char *line = lines[line_count - 1];
-    if (line[0] && utf8_len(line) + 1 + utf8_len(word) > max_chars &&
-        line_count < MAX_LINES) {
-      line_count++;
-      line = lines[line_count - 1];
-    }
-    if (line[0]) {
-      strncat(line, " ", MAX_LINE_BYTES - strlen(line) - 1);
-    }
-    strncat(line, word, MAX_LINE_BYTES - strlen(line) - 1);
+    char *line = lines[*line_count - 1];
+    char candidate[MAX_LINE_BYTES * 2];
+    snprintf(candidate, sizeof(candidate), "%s%s%s", line, line[0] ? " " : "",
+             word);
 
-    p = space ? space + 1 : p + word_bytes;
+    if (line[0] && (force_break || text_width(candidate, st) > w)) {
+      if (*line_count == max_lines) {
+        fits = false;
+        strncat(line, " ", MAX_LINE_BYTES - strlen(line) - 1);
+        strncat(line, word, MAX_LINE_BYTES - strlen(line) - 1);
+      } else {
+        (*line_count)++;
+        strncpy(lines[*line_count - 1], word, MAX_LINE_BYTES - 1);
+      }
+    } else {
+      strncpy(line, candidate, MAX_LINE_BYTES - 1);
+    }
+
+    force_break = separator == '\n';
+    p += word_bytes + (separator ? 1 : 0);
   }
 
-  gfx->setFont(u8g2_font_unifont_tf);
-  gfx->setUTF8Print(true);
+  for (int i = 0; i < *line_count; i++) {
+    if (text_width(lines[i], st) > w) {
+      fits = false; // una parola sola piu' lunga della riga
+    }
+  }
+  return fits;
+}
+
+void sign_draw_text(const char *text, int x, int y, int w, int h) {
+  char lines[MAX_LINES][MAX_LINE_BYTES];
+  int line_count;
+
+  const TextStyle *st = &SMALL;
+  for (int i = 0; i < STYLE_COUNT; i++) {
+    if (wrap(text, *STYLES[i], w - 2 * SIDE_MARGIN, h, lines, &line_count)) {
+      st = STYLES[i];
+      break;
+    }
+  }
+  if (st == &SMALL) {
+    wrap(text, SMALL, w - 2 * SIDE_MARGIN, h, lines, &line_count); // anche se non ci sta del tutto
+  }
+
+  use_style(*st);
   gfx->setTextColor(SIGN_TEXT_COLOR);
 
-  int top = y + (h - line_count * LINE_H) / 2;
+  // misura i pixel veri di ogni riga (rispetto alla sua linea di base),
+  // cosi' il blocco di testo si centra davvero, anche in verticale
+  int16_t ink_x[MAX_LINES];
+  uint16_t ink_w[MAX_LINES];
+  int ink_top = INT16_MAX, ink_bottom = INT16_MIN;
   for (int i = 0; i < line_count; i++) {
-    int line_w = utf8_len(lines[i]) * CHAR_W;
-    gfx->setCursor(x + (w - line_w) / 2, top + i * LINE_H + 13); // 13 = linea di base
-    gfx->print(lines[i]);
+    int16_t y1;
+    uint16_t ink_h;
+    gfx->getTextBounds(lines[i], 0, 0, &ink_x[i], &y1, &ink_w[i], &ink_h);
+    ink_top = min(ink_top, i * st->line_h + y1);
+    ink_bottom = max(ink_bottom, i * st->line_h + y1 + ink_h + st->bold_y);
+  }
+  int first_baseline = y + (h - (ink_bottom - ink_top)) / 2 - ink_top;
+
+  for (int i = 0; i < line_count; i++) {
+    int line_x = x + (w - (ink_w[i] + st->bold_x)) / 2 - ink_x[i];
+    int line_y = first_baseline + i * st->line_h;
+    for (int dx = 0; dx <= st->bold_x; dx++) {
+      for (int dy = 0; dy <= st->bold_y; dy++) {
+        gfx->setCursor(line_x + dx, line_y + dy);
+        gfx->print(lines[i]);
+      }
+    }
+  }
+}
+
+void sign_check_phrases(int w, int h) {
+  char lines[MAX_LINES][MAX_LINE_BYTES];
+  int line_count;
+  for (int i = 0; i < PHRASE_COUNT; i++) {
+    if (!wrap(PHRASES[i].text, SMALL, w - 2 * SIDE_MARGIN, h, lines, &line_count)) {
+      Serial.printf("Frase troppo lunga per il cartoncino: %s\n", PHRASES[i].text);
+    }
   }
 }
