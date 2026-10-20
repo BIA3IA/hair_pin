@@ -655,7 +655,7 @@
               "wooden_frame/animations/The_girl_holds_the_wooden_frame_steady_as_the_blan-8d2b08da/frame_010.png"
             ]
           },
-          "The_girl_lowers_the_wooden_frame_from_her_chest_sm": {
+          "lower_sign": {
             "direction": "south",
             "frames": [
               "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_000.png",
@@ -665,14 +665,7 @@
               "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_004.png",
               "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_005.png",
               "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_006.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_007.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_008.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_009.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_010.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_011.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_012.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_013.png",
-              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_014.png"
+              "wooden_frame/animations/The_girl_lowers_the_wooden_frame_from_her_chest_sm/frame_007.png"
             ]
           },
           "The_girl_holds_the_wooden_frame_steady_as_the_blan-b88c7a81": {

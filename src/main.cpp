@@ -1,5 +1,7 @@
+#include "cartello/cartello.h"
 #include "display/display.h"
 #include "imu/imu.h"
+#include "rtc/orologio.h"
 #include "sprites/sprite.h"
 #include "state_machine/state_machine.h"
 #include "touch/tocchi_display.h"
@@ -64,6 +66,7 @@ static int current_frame = 0;
 static int frame_count = 1;
 static unsigned long last_frame_time = 0;
 const unsigned long FRAME_INTERVAL_MS = 100;
+const float SPRITE_SCALE = 1.7;
 static int prev_x = 0, prev_y = 0, prev_dw = 0, prev_dh = 0;
 
 const unsigned long HOLD_FRAME_INTERVAL_MS = 180; // più lento su finale
@@ -77,6 +80,8 @@ enum class PlayMode {
   ONCE, // una volta, poi idle
   LOOP, // ripete il ciclo per un po', poi idle
   HOLD, // ondeggia sugli ultimi frame per un po', poi reverse e idle
+  BACKWARD, // una volta, dall'ultimo frame al primo
+  SIGN,     // cartello fermo con la frase per un po'
 };
 
 struct IdleVariant {
@@ -118,7 +123,7 @@ static unsigned long variant_timer_start = 0;
 static unsigned long variant_delay = 0;
 
 void draw_animation_frame(const char *path) {
-  sprite_draw_frame_buffered(path, current_frame, 1.7, prev_x, prev_y, prev_dw,
+  sprite_draw_frame_buffered(path, current_frame, SPRITE_SCALE, prev_x, prev_y, prev_dw,
                              prev_dh, &prev_x, &prev_y, &prev_dw, &prev_dh);
 }
 
@@ -157,10 +162,10 @@ void advance_frame(int hold) {
   }
 }
 
-void play(const char *path) {
+void play(const char *path, bool from_end = false) {
   current_path = path;
   frame_count = sprite_get_frame_count(path);
-  current_frame = 0;
+  current_frame = from_end ? frame_count - 1 : 0;
   holding = false;
   frame_dir = 1;
   reversing = false;
@@ -171,14 +176,27 @@ void play(const char *path) {
 const IdleVariant PUSH = {"/Idle/push.bin", PlayMode::ONCE, 0, 0, 0, 100};
 const IdleVariant BEAT_YOU = {"/Idle/beat_you.bin", PlayMode::HOLD, 3, 1500, 3000, 120};
 
+// cartello: lo alza (abbassare al contrario), frase, lo abbassa
+const IdleVariant SIGN_UP = {"/wooden_frame/lower_sign.bin", PlayMode::BACKWARD, 0, 0, 0, 100};
+const IdleVariant SIGN_HOLD = {"/wooden_frame/Idle.bin", PlayMode::SIGN, 0, 5000, 8000, 100};
+const IdleVariant SIGN_DOWN = {"/wooden_frame/lower_sign.bin", PlayMode::ONCE, 0, 0, 0, 100};
+const int SIGN_CHANCE = 30; // % delle variazioni che sono un cartello
+
+// zona bianca del cartello in Idle.bin, in pixel della tela originale
+const int SIGN_X = 49, SIGN_Y = 72, SIGN_W = 68, SIGN_H = 39;
+
 static bool reacting = false;
-static const IdleVariant *queued = nullptr; // prossimo passo della reazione
+
+// passi in sequenza (es. spinta -> beat_you); quando finisce l'ultimo torna allo stato
+const int MAX_STEPS = 3;
+static const IdleVariant *steps[MAX_STEPS] = {};
+static int step_index = 0;
 
 void start_animation(State state) {
   shown_state = state;
   variant = nullptr;
   reacting = false;
-  queued = nullptr;
+  steps[0] = steps[1] = steps[2] = nullptr;
   play(animation_path_for_state(state));
   Serial.println("Current state: " + String(static_cast<int>(state)));
   if (state == State::IDLE) {
@@ -186,23 +204,58 @@ void start_animation(State state) {
   }
 }
 
+void draw_sign_phrase() {
+  int ox, oy;
+  sprite_canvas_origin(SIGN_HOLD.path, SPRITE_SCALE, &ox, &oy);
+  const char *phrase = sign_pick_phrase(rtc_hour());
+  sign_draw_text(phrase, ox + (int)(SIGN_X * SPRITE_SCALE),
+                 oy + (int)(SIGN_Y * SPRITE_SCALE), (int)(SIGN_W * SPRITE_SCALE),
+                 (int)(SIGN_H * SPRITE_SCALE));
+  Serial.printf("Cartello: %s\n", phrase);
+}
+
 void start_variant_step(const IdleVariant *v) {
   variant = v;
   variant_start = millis();
   variant_duration = random(v->min_ms, v->max_ms);
-  play(v->path);
+  play(v->path, v->mode == PlayMode::BACKWARD);
+  if (v->mode == PlayMode::SIGN) {
+    draw_sign_phrase();
+  }
+}
+
+void start_steps(const IdleVariant *a, const IdleVariant *b = nullptr,
+                 const IdleVariant *c = nullptr) {
+  steps[0] = a;
+  steps[1] = b;
+  steps[2] = c;
+  step_index = 0;
+  start_variant_step(a);
+}
+
+// false quando non ci sono altri passi
+bool next_step() {
+  step_index++;
+  if (step_index >= MAX_STEPS || steps[step_index] == nullptr) {
+    return false;
+  }
+  start_variant_step(steps[step_index]);
+  return true;
 }
 
 void start_variant() {
-  start_variant_step(&IDLE_VARIANTS[random(IDLE_VARIANT_COUNT)]);
+  if (random(100) < SIGN_CHANCE) {
+    start_steps(&SIGN_UP, &SIGN_HOLD, &SIGN_DOWN);
+    return;
+  }
+  start_steps(&IDLE_VARIANTS[random(IDLE_VARIANT_COUNT)]);
   Serial.printf("Variazione idle: %s\n", variant->path);
 }
 
 void start_reaction() {
   reacting = true;
   shown_state = State::ANNOYED;
-  queued = &BEAT_YOU;
-  start_variant_step(&PUSH);
+  start_steps(&PUSH, &BEAT_YOU);
   Serial.println("Toccata!");
 }
 
@@ -234,6 +287,13 @@ bool advance_variant() {
       holding = false;
     }
     return true;
+
+  case PlayMode::BACKWARD:
+    current_frame--;
+    return current_frame >= 0;
+
+  case PlayMode::SIGN:
+    return !time_up;
   }
   return false;
 }
@@ -243,6 +303,7 @@ void setup() {
   display_init();
   imu_init();
   touch_init();
+  rtc_init();
   sprite_init();
   start_animation(State::IDLE);
   delay(1000);
@@ -254,9 +315,12 @@ void loop() {
   State target = state_machine_current();
 
   // la spinta parte solo se e' in piedi tranquilla o sta camminando
-  // (le variazioni HOLD sono quelle a terra, al telefono, che ballano...)
-  bool calm_idle = shown_state == State::IDLE &&
-                   (variant == nullptr || variant->mode != PlayMode::HOLD);
+  // (non durante le HOLD, a terra, al telefono..., ne' col cartello in mano)
+  bool calm_variant = variant != nullptr && steps[1] == nullptr &&
+                      (variant->mode == PlayMode::ONCE ||
+                       variant->mode == PlayMode::LOOP);
+  bool calm_idle =
+      shown_state == State::IDLE && (variant == nullptr || calm_variant);
   bool can_be_pushed = !reacting && !reversing &&
                        (calm_idle || shown_state == State::WALKING);
 
@@ -291,10 +355,7 @@ void loop() {
   if (millis() - last_frame_time >= interval) {
     if (variant != nullptr) {
       if (!advance_variant()) {
-        if (queued != nullptr) {
-          start_variant_step(queued);
-          queued = nullptr;
-        } else {
+        if (!next_step()) {
           start_animation(target);
         }
         return;
@@ -305,7 +366,10 @@ void loop() {
       advance_frame(hold_frames_for_state(shown_state));
     }
     last_frame_time = millis();
-    draw_animation_frame(current_path);
+    // col cartello fermo non si ridisegna, se no si cancella la frase
+    if (variant == nullptr || variant->mode != PlayMode::SIGN) {
+      draw_animation_frame(current_path);
+    }
   }
 
   delay(20);

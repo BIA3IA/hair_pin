@@ -117,6 +117,20 @@ void sprite_get_draw_rect(const char *path, float scale, int *x, int *y,
   screen_rect(hd, scale, x, y, dw, dh);
 }
 
+void sprite_canvas_origin(const char *path, float scale, int *x, int *y) {
+  File f = LittleFS.open(path, "r");
+  if (!f) {
+    *x = *y = 0;
+    return;
+  }
+
+  SpriteHeader hd = read_header(f);
+  f.close();
+
+  *x = (SCREEN_WIDTH - (int)(hd.canvas_w * scale)) / 2;
+  *y = (SCREEN_HEIGHT - (int)(hd.canvas_h * scale)) / 2;
+}
+
 void rect_union(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh,
                 int *ux, int *uy, int *uw, int *uh) {
   if (aw <= 0 || ah <= 0) {
