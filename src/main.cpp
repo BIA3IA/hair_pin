@@ -174,6 +174,7 @@ void play(const char *path, bool from_end = false) {
   draw_animation_frame(path);
 }
 
+const IdleVariant GET_UP = {"/Idle/falling_tired.bin", PlayMode::BACKWARD, 0, 0, 0, 100};
 const IdleVariant PUSH = {"/Idle/push.bin", PlayMode::ONCE, 0, 0, 0, 100};
 const IdleVariant BEAT_YOU = {"/Idle/beat_you.bin", PlayMode::HOLD, 3, 1500, 3000, 120};
 
@@ -272,10 +273,10 @@ void start_variant() {
   Serial.printf("Variazione idle: %s\n", variant->path);
 }
 
-void start_reaction() {
+void start_reaction(bool from_ground = false) {
   reacting = true;
   shown_state = State::ANNOYED;
-  start_steps(&PUSH, &BEAT_YOU);
+  start_steps(from_ground ? &GET_UP : &PUSH, &BEAT_YOU);
   Serial.println("Toccata!");
 }
 
@@ -346,8 +347,15 @@ void loop() {
   bool can_be_pushed = !reacting && !reversing &&
                        (calm_idle || shown_state == State::WALKING);
 
-  if (touch_tapped() && can_be_pushed) {
-    start_reaction();
+  bool can_get_up = !reacting && !reversing && holding &&
+                    variant != nullptr &&
+                    strcmp(variant->path, GET_UP.path) == 0;
+  if (touch_tapped()) {
+    if (can_get_up) {
+      start_reaction(true); // prima si rialza, poi si arrabbia
+    } else if (can_be_pushed) {
+      start_reaction();
+    }
   }
 
   if (reacting) {

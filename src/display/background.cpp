@@ -3,7 +3,7 @@
 #include <math.h>
 
 namespace {
-constexpr int COUNT = 4;
+constexpr int COUNT = 6;
 constexpr int MAX_SIZE = 16;
 constexpr unsigned long FRAME_MS = 33;
 constexpr int DRIFT_X = 12;
@@ -44,16 +44,18 @@ void init_particles() {
   for (int i = 0; i < COUNT; i++) {
     auto &p = particles[i];
     p.size = i % 2 ? 14 : 16;
-    // Due forme per lato: anche le stelle restano visibili accanto
-    // al rettangolo centrale occupato dalla sprite in idle.
-    p.anchor_x = gfx->width() * (i < 2 ? 16 : 84) / 100 - p.size / 2;
-    const int heights[] = {22, 70, 30, 78};
+    // Quattro forme ai lati e due dietro Bianca, visibili quando si sposta
+    // o cade. Il renderer della sprite le copre solo nei pixel opachi.
+    const int widths[] = {16, 16, 84, 84, 42, 58};
+    const int heights[] = {22, 70, 30, 78, 28, 52};
+    p.anchor_x = gfx->width() * widths[i] / 100 - p.size / 2;
     p.anchor_y = gfx->height() * heights[i] / 100 - p.size / 2;
     p.angle_x = random(6283) * 0.001f;
     p.angle_y = random(6283) * 0.001f;
     p.color = colors[i % 3];
     int n = p.size - 1;
-    if (i % 3 != 0) {
+    bool heart = i % 3 == 0 || i == 5;
+    if (!heart) {
       // Un solo tratto chiuso: alto, basso-destra, sinistra,
       // destra, basso-sinistra. Pentagramma senza cerchio.
       int vx[] = {n / 2, n * 4 / 5, 0, n, n / 5};
