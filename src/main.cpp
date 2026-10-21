@@ -1,5 +1,6 @@
 #include "cartello/cartello.h"
 #include "display/display.h"
+#include "display/background.h"
 #include "imu/imu.h"
 #include "rtc/orologio.h"
 #include "sprites/sprite.h"
@@ -93,7 +94,6 @@ struct IdleVariant {
 };
 
 const IdleVariant IDLE_VARIANTS[] = {
-    {"/Idle/sleepy.bin", PlayMode::ONCE, 0, 0, 0, 100},
     {"/Idle/steady.bin", PlayMode::ONCE, 0, 0, 0, 160},
     {"/Idle/coffe.bin", PlayMode::ONCE, 0, 0, 0, 200},
     {"/Idle/thoughtful.bin", PlayMode::ONCE, 0, 0, 0, 200},
@@ -114,8 +114,8 @@ const IdleVariant IDLE_VARIANTS[] = {
 const int IDLE_VARIANT_COUNT = sizeof(IDLE_VARIANTS) / sizeof(IDLE_VARIANTS[0]);
 
 // ogni quanto parte una variazione mentre e' in idle
-const unsigned long VARIANT_MIN_MS = 2000; // TEMP prova, era 15000
-const unsigned long VARIANT_MAX_MS = 4000; // TEMP prova, era 40000
+const unsigned long VARIANT_MIN_MS = 12000;
+const unsigned long VARIANT_MAX_MS = 45000;
 
 static const IdleVariant *variant = nullptr; // nullptr = nessuna variazione
 static unsigned long variant_start = 0;
@@ -181,7 +181,11 @@ const IdleVariant BEAT_YOU = {"/Idle/beat_you.bin", PlayMode::HOLD, 3, 1500, 300
 const IdleVariant SIGN_UP = {"/Idle/pull_card.bin", PlayMode::ONCE, 0, 0, 0, 100};
 const IdleVariant SIGN_HOLD = {"/Idle/pull_card.bin", PlayMode::SIGN, 0, 5000, 8000, 100};
 const IdleVariant SIGN_DOWN = {"/Idle/pull_card.bin", PlayMode::BACKWARD, 0, 0, 0, 100};
-const int SIGN_CHANCE = 50; // % delle variazioni che sono un cartello. TEMP prova, era 30
+const int SIGN_CHANCE = 10; // solo dopo il cooldown, fra le variazioni
+const unsigned long SIGN_COOLDOWN_MS = 180000;
+static unsigned long last_sign_time = 0;
+static const char *sign_phrase = nullptr;
+static int recent_variants[3] = {-1, -1, -1};
 
 // zona bianca del cartoncino nell'ultimo frame, in pixel della tela originale
 const int SIGN_X = 58, SIGN_Y = 63, SIGN_W = 53, SIGN_H = 33; // tutto il cartoncino, da cornice a cornice
@@ -208,11 +212,10 @@ void start_animation(State state) {
 void draw_sign_phrase() {
   int ox, oy;
   sprite_canvas_origin(SIGN_HOLD.path, SPRITE_SCALE, &ox, &oy);
-  const char *phrase = sign_pick_phrase(rtc_hour());
+  const char *phrase = sign_phrase;
   sign_draw_text(phrase, ox + (int)(SIGN_X * SPRITE_SCALE),
                  oy + (int)(SIGN_Y * SPRITE_SCALE), (int)(SIGN_W * SPRITE_SCALE),
                  (int)(SIGN_H * SPRITE_SCALE));
-  Serial.printf("Cartello: %s\n", phrase);
 }
 
 void start_variant_step(const IdleVariant *v) {
@@ -222,6 +225,8 @@ void start_variant_step(const IdleVariant *v) {
   play(v->path,
        v->mode == PlayMode::BACKWARD || v->mode == PlayMode::SIGN);
   if (v->mode == PlayMode::SIGN) {
+    sign_phrase = sign_pick_phrase(rtc_hour());
+    last_sign_time = millis();
     draw_sign_phrase();
   }
 }
@@ -246,11 +251,24 @@ bool next_step() {
 }
 
 void start_variant() {
-  if (random(100) < SIGN_CHANCE) {
+  if (millis() - last_sign_time >= SIGN_COOLDOWN_MS &&
+      random(100) < SIGN_CHANCE) {
     start_steps(&SIGN_UP, &SIGN_HOLD, &SIGN_DOWN);
     return;
   }
-  start_steps(&IDLE_VARIANTS[random(IDLE_VARIANT_COUNT)]);
+  int candidates[IDLE_VARIANT_COUNT];
+  int count = 0;
+  for (int i = 0; i < IDLE_VARIANT_COUNT; i++) {
+    if (i != recent_variants[0] && i != recent_variants[1] &&
+        i != recent_variants[2]) {
+      candidates[count++] = i;
+    }
+  }
+  int chosen = candidates[random(count)];
+  recent_variants[2] = recent_variants[1];
+  recent_variants[1] = recent_variants[0];
+  recent_variants[0] = chosen;
+  start_steps(&IDLE_VARIANTS[chosen]);
   Serial.printf("Variazione idle: %s\n", variant->path);
 }
 
@@ -314,6 +332,7 @@ void setup() {
 }
 
 void loop() {
+  background_update(prev_x, prev_y, prev_dw, prev_dh);
   state_machine_update(imu_update());
   State target = state_machine_current();
 
@@ -369,11 +388,16 @@ void loop() {
       advance_frame(hold_frames_for_state(shown_state));
     }
     last_frame_time = millis();
-    // col cartello fermo non si ridisegna, se no si cancella la frase
-    if (variant == nullptr || variant->mode != PlayMode::SIGN) {
-      draw_animation_frame(current_path);
+  }
+
+  static unsigned long last_render_time = 0;
+  if (millis() - last_render_time >= 33) {
+    last_render_time = millis();
+    draw_animation_frame(current_path);
+    if (variant != nullptr && variant->mode == PlayMode::SIGN) {
+      draw_sign_phrase(); // stessa frase mentre lo sfondo continua a muoversi
     }
   }
 
-  delay(20);
+  delay(1);
 }

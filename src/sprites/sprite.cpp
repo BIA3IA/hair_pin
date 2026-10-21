@@ -1,5 +1,6 @@
 #include "sprite.h"
 #include "../display/display.h"
+#include "../display/background.h"
 #include <LittleFS.h>
 
 static SpriteHeader read_header(File &f) {
@@ -156,27 +157,33 @@ void sprite_draw_frame_buffered(const char *path, int frameIndex, float scale,
                                 int prev_x, int prev_y, int prev_dw,
                                 int prev_dh, int *out_x, int *out_y,
                                 int *out_dw, int *out_dh) {
-  File f = LittleFS.open(path, "r");
-  if (!f) {
-    Serial.printf("Impossibile aprire: %s\n", path);
-    return;
+  // Conserva solo il frame corrente: lo sfondo puo' aggiornarsi senza
+  // rileggere lo stesso asset dalla flash a ogni refresh.
+  static String cached_path;
+  static int cached_frame = -1;
+  static SpriteHeader hd;
+  static uint8_t *mask = nullptr;
+  static uint8_t *pixels = nullptr;
+  if (cached_path != path || cached_frame != frameIndex) {
+    File f = LittleFS.open(path, "r");
+    if (!f) {
+      Serial.printf("Impossibile aprire: %s\n", path);
+      return;
+    }
+    hd = read_header(f);
+    int maskBytes = (hd.w * hd.h + 7) / 8;
+    int pixelBytes = hd.w * hd.h * 2;
+    f.seek(SPRITE_HEADER_SIZE + frameIndex * (maskBytes + pixelBytes));
+    delete[] mask;
+    delete[] pixels;
+    mask = new uint8_t[maskBytes];
+    pixels = new uint8_t[pixelBytes];
+    f.read(mask, maskBytes);
+    f.read(pixels, pixelBytes);
+    cached_path = path;
+    cached_frame = frameIndex;
   }
-
-  SpriteHeader hd = read_header(f);
   uint16_t w = hd.w;
-  uint16_t h = hd.h;
-
-  int maskBytes = (w * h + 7) / 8;
-  int pixelBytes = w * h * 2;
-  int frameBytes = maskBytes + pixelBytes;
-
-  f.seek(SPRITE_HEADER_SIZE + frameIndex * frameBytes);
-
-  uint8_t *mask = new uint8_t[maskBytes];
-  uint8_t *pixels = new uint8_t[pixelBytes];
-  f.read(mask, maskBytes);
-  f.read(pixels, pixelBytes);
-  f.close();
 
   int x, y, dw, dh;
   screen_rect(hd, scale, &x, &y, &dw, &dh);
@@ -187,6 +194,7 @@ void sprite_draw_frame_buffered(const char *path, int frameIndex, float scale,
 
   uint16_t *buffer = new uint16_t[uw * uh];
   memset(buffer, 0, uw * uh * sizeof(uint16_t)); // 0 = nero in RGB565
+  background_compose(buffer, ux, uy, uw, uh);
 
   for (int dy = 0; dy < dh; dy++) {
     int sy = (int)(dy / scale);
@@ -205,8 +213,6 @@ void sprite_draw_frame_buffered(const char *path, int frameIndex, float scale,
 
   gfx->draw16bitRGBBitmap(ux, uy, buffer, uw, uh);
 
-  delete[] mask;
-  delete[] pixels;
   delete[] buffer;
 
   *out_x = x;
