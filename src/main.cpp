@@ -103,7 +103,6 @@ const IdleVariant IDLE_VARIANTS[] = {
     {"/Idle/idle_3.bin", PlayMode::LOOP, 0, 20000, 40000, 100},
     {"/Idle/little_jump_in_place.bin", PlayMode::LOOP, 0, 8000, 15000, 100},
     {"/Idle/bouncing.bin", PlayMode::LOOP, 0, 8000, 15000, 100},
-    {"/Idle/phone_typing.bin", PlayMode::HOLD, 2, 5000, 10000, 100},
     {"/Idle/falling_tired.bin", PlayMode::HOLD, 1, 20000, 40000, 100},
     {"/Idle/dance.bin", PlayMode::HOLD, 3, 2000, 4000, 100},
     {"/Idle/strange_pose.bin", PlayMode::HOLD, 3, 3000, 6000, 120},

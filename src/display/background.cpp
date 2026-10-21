@@ -39,8 +39,8 @@ void line(Particle &p, int x, int y, int end_x, int end_y) {
 }
 
 void init_particles() {
-  const uint16_t colors[] = {0x596e, 0x7a0c,
-                             0x61cf}; // viola e rosa malva della sprite
+  const uint16_t HEART_COLOR = 0xB351; // rosa morbido
+  const uint16_t STAR_COLOR = 0x9191; // fucsia smorzato
   for (int i = 0; i < COUNT; i++) {
     auto &p = particles[i];
     p.size = i % 2 ? 14 : 16;
@@ -52,9 +52,9 @@ void init_particles() {
     p.anchor_y = gfx->height() * heights[i] / 100 - p.size / 2;
     p.angle_x = random(6283) * 0.001f;
     p.angle_y = random(6283) * 0.001f;
-    p.color = colors[i % 3];
     int n = p.size - 1;
     bool heart = i % 3 == 0 || i == 5;
+    p.color = heart ? HEART_COLOR : STAR_COLOR;
     if (!heart) {
       // Un solo tratto chiuso: alto, basso-destra, sinistra,
       // destra, basso-sinistra. Pentagramma senza cerchio.
