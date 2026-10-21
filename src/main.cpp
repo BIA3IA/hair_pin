@@ -393,9 +393,11 @@ void loop() {
   static unsigned long last_render_time = 0;
   if (millis() - last_render_time >= 33) {
     last_render_time = millis();
-    draw_animation_frame(current_path);
-    if (variant != nullptr && variant->mode == PlayMode::SIGN) {
-      draw_sign_phrase(); // stessa frase mentre lo sfondo continua a muoversi
+    // La lavagna ferma e' gia' completa di testo: ridisegnare il frame
+    // cancellerebbe la frase prima di riscriverla, causando sfarfallio.
+    // background_update continua ad animare la zona esterna alla sprite.
+    if (variant == nullptr || variant->mode != PlayMode::SIGN) {
+      draw_animation_frame(current_path);
     }
   }
 

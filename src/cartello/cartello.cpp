@@ -27,7 +27,6 @@ const Phrase PHRASES[] = {
     {"ANSIA", -1, -1},
     {"vabbè", -1, -1},
     {"Non so", -1, -1},
-    {"Sto pensando", -1, -1},
     {"FORSE?", -1, -1},
     {"FORSE NO?", -1, -1},
     {"SPARISCO", -1, -1},
