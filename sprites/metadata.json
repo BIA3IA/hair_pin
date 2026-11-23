@@ -476,28 +476,6 @@
               "Idle/animations/idle_1/frame_008.png"
             ]
           },
-          "turn_away": {
-            "direction": "south",
-            "frames": [
-              "Idle/animations/turn_away/frame_000.png",
-              "Idle/animations/turn_away/frame_001.png",
-              "Idle/animations/turn_away/frame_002.png",
-              "Idle/animations/turn_away/frame_003.png",
-              "Idle/animations/turn_away/frame_004.png",
-              "Idle/animations/turn_away/frame_005.png",
-              "Idle/animations/turn_away/frame_006.png",
-              "Idle/animations/turn_away/frame_007.png",
-              "Idle/animations/turn_away/frame_008.png",
-              "Idle/animations/turn_away/frame_009.png",
-              "Idle/animations/turn_away/frame_010.png",
-              "Idle/animations/turn_away/frame_011.png",
-              "Idle/animations/turn_away/frame_012.png",
-              "Idle/animations/turn_away/frame_013.png",
-              "Idle/animations/turn_away/frame_014.png",
-              "Idle/animations/turn_away/frame_015.png",
-              "Idle/animations/turn_away/frame_016.png"
-            ]
-          },
           "cuddled": {
             "direction": "south",
             "frames": [
