@@ -1,0 +1,6 @@
+src/bianca/frames.ts
+assets/
+AGENTS.md
+src/bianca/default-phrases.ts
+**/build/
+android/

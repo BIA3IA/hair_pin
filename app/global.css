@@ -1,0 +1,23 @@
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+@import 'nativewind/theme';
+
+/* Colori presi dagli sprite di Bianca */
+@theme {
+  --color-night: #0e0b14;
+  --color-plum-950: #160f1f;
+  --color-plum-900: #1e1529;
+  --color-plum-800: #2a1b3d;
+  --color-plum-700: #3b2754;
+  --color-violet: #6b3fa0;
+  --color-violet-bright: #8a5cc4;
+  --color-lilac: #b79ced;
+  --color-heart: #d94868;
+  --color-paper: #ede6f5;
+  --color-mist: #9c8fb0;
+
+  --font-pixel: 'PixelifySans_600SemiBold';
+  --font-body: 'AtkinsonHyperlegible_400Regular';
+  --font-body-bold: 'AtkinsonHyperlegible_700Bold';
+}
