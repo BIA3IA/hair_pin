@@ -1,8 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
-// Tutte le animazioni partono dalla posa base: il player ci torna sempre
-// prima di finire, cosi' il passaggio alla successiva non salta.
+// Le clip complete avanzano fino alla fine; solo le transizioni di posa
+// che lo richiedono usano il ritorno inverso.
 enum class PlayMode {
   FORWARD,  // avanti una volta, si ferma sull'ultimo frame
   ONCE,     // avanti e poi indietro fino alla posa base

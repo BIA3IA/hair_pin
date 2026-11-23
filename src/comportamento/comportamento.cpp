@@ -4,6 +4,7 @@
 #include "../player/player.h"
 #include "../sprites/sprite.h"
 #include "../umore/umore.h"
+#include "../ble/protocollo.h"
 
 namespace {
 // le durate delle HOLD contano dall'inizio, compresa la parte in avanti
@@ -15,28 +16,28 @@ const Clip SHAKEN = {"/Idle/shake.bin", PlayMode::HOLD, 3, 0, 0, 100};
 const Clip UPSIDE_DOWN = {"/Idle/upsidedown.bin", PlayMode::HOLD, 3, 0, 0, 100};
 const Clip TILTED[] = {
     {"/Idle/lose_balance.bin", PlayMode::HOLD, 5, 0, 0, 100},
-    {"/Idle/equilibrio.bin", PlayMode::HOLD, 3, 0, 0, 100},
+    {"/Idle/equilibrio.bin", PlayMode::LOOP, 0, 0, 0, 100},
     {"/Idle/slide.bin", PlayMode::HOLD, 5, 0, 0, 100},
     {"/Idle/yanked.bin", PlayMode::HOLD, 5, 0, 0, 100},
 };
 
 const Clip VARIANTS[] = {
-    {"/Idle/steady.bin", PlayMode::ONCE, 0, 0, 0, 160},
-    {"/Idle/coffe.bin", PlayMode::ONCE, 0, 0, 0, 200},
-    {"/Idle/thoughtful.bin", PlayMode::ONCE, 0, 0, 0, 200},
-    {"/Idle/no_head.bin", PlayMode::ONCE, 0, 0, 0, 160},
-    {"/Idle/looking_right.bin", PlayMode::ONCE, 0, 0, 0, 160},
+    {"/Idle/steady.bin", PlayMode::FORWARD, 0, 0, 0, 160},
+    {"/Idle/coffe.bin", PlayMode::FORWARD, 0, 0, 0, 200},
+    {"/Idle/thoughtful.bin", PlayMode::FORWARD, 0, 0, 0, 200},
+    {"/Idle/no_head.bin", PlayMode::FORWARD, 0, 0, 0, 160},
+    {"/Idle/looking_right.bin", PlayMode::FORWARD, 0, 0, 0, 160},
     {"/Idle/idle_2.bin", PlayMode::LOOP, 0, 20000, 40000, 100},
     {"/Idle/idle_3.bin", PlayMode::LOOP, 0, 20000, 40000, 100},
-    {"/Idle/little_jump_in_place.bin", PlayMode::LOOP, 0, 8000, 15000, 100, Tone::HAPPY},
+    {"/Idle/little_jump_in_place.bin", PlayMode::LOOP, 0, 25000, 45000, 100, Tone::HAPPY},
     {"/Idle/bouncing.bin", PlayMode::LOOP, 0, 8000, 15000, 100, Tone::HAPPY},
     {"/Idle/falling_tired.bin", PlayMode::HOLD, 1, 20000, 40000, 100, Tone::GLOOMY},
     {"/Idle/dance.bin", PlayMode::HOLD, 3, 2000, 4000, 100, Tone::HAPPY},
-    {"/Idle/strange_pose.bin", PlayMode::HOLD, 3, 3000, 6000, 120},
+    {"/Idle/strange_pose.bin", PlayMode::FORWARD, 0, 0, 0, 120},
     {"/Idle/get_phone.bin", PlayMode::HOLD, 3, 3000, 6000, 100},
     {"/Idle/pull_frame_glow.bin", PlayMode::HOLD, 3, 3000, 5000, 100, Tone::HAPPY},
     {"/Idle/pull_orb.bin", PlayMode::HOLD, 3, 3000, 5000, 100, Tone::HAPPY},
-    {"/Idle/wave.bin", PlayMode::ONCE, 0, 0, 0, 90, Tone::HAPPY},
+    {"/Idle/wave.bin", PlayMode::FORWARD, 0, 0, 0, 90, Tone::HAPPY},
     {"/Idle/sad.bin", PlayMode::HOLD, 4, 7000, 12000, 120, Tone::GLOOMY},
     {"/Idle/grumpy.bin", PlayMode::HOLD, 6, 6000, 10000, 110, Tone::GLOOMY},
 };
@@ -47,12 +48,15 @@ const Clip SLEEP = {"/Idle/falling_asleep.bin", PlayMode::HOLD, 3, 1800000, 3600
 
 const Clip PUSH = {"/Idle/push.bin", PlayMode::FORWARD, 0, 0, 0, 100};
 const Clip BEAT_YOU = {"/Idle/beat_you.bin", PlayMode::HOLD, 3, 2800, 4300, 120};
-const Clip HAPPY_HOP = {"/Idle/little_jump_in_place.bin", PlayMode::ONCE, 0, 0, 0, 90};
+const Clip HAPPY_HOP = {"/Idle/little_jump_in_place.bin", PlayMode::FORWARD, 0, 0, 0, 90};
 const Clip GRUMPY = {"/Idle/grumpy.bin", PlayMode::HOLD, 6, 4000, 6000, 110};
-const Clip TURN_AWAY = {"/Idle/turn_away.bin", PlayMode::HOLD, 1, 6500, 9500, 90};
+const Clip FED_UP = {"/Idle/grumpy.bin", PlayMode::HOLD, 6, 8000, 11000, 110}; // basta tocchi
 const Clip CUDDLED = {"/Idle/cuddled.bin", PlayMode::HOLD, 4, 4500, 6000, 110};
-const Clip WAVE = {"/Idle/wave.bin", PlayMode::ONCE, 0, 0, 0, 90};
+const Clip WAVE = {"/Idle/wave.bin", PlayMode::FORWARD, 0, 0, 0, 90};
 const Clip STARTLED = {"/Idle/startled.bin", PlayMode::HOLD, 3, 1800, 2500, 70};
+const Clip GLANCE_PHONE = {"/Idle/get_phone.bin", PlayMode::ONCE, 0, 0, 0, 90};
+const Clip MESSAGE_SIGN = {"/Idle/pull_card.bin", PlayMode::SIGN, 0, 6500, 8000, 100};
+const Clip PASSKEY_SIGN = {"/Idle/pull_card.bin", PlayMode::SIGN, 0, 60000, 60000, 100};
 
 const unsigned long VARIANT_MIN_MS = 12000;
 const unsigned long VARIANT_MAX_MS = 45000;
@@ -61,10 +65,52 @@ const unsigned long SIGN_COOLDOWN_MS = 180000;
 const unsigned long TAP_WINDOW_MS = 20000;
 const unsigned long LONG_ABSENCE_MS = 30UL * 60 * 1000;
 const uint8_t SLEEP_BRIGHTNESS = 20;
+const unsigned long MESSAGE_WAIT_MS = 60000; // se e' impegnata aspetta al massimo cosi'
 
 // zona bianca del cartoncino nell'ultimo frame, in pixel della tela originale
 const int SIGN_X = 58, SIGN_Y = 63, SIGN_W = 53, SIGN_H = 33;
 
+const Clip REMOTE_CLIPS[] = {
+  {"/Idle/beat_you.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/bouncing.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/coffe.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/cuddled.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/dance.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/equilibrio.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/falling_asleep.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/falling_tired.bin", PlayMode::HOLD, 1, 20000, 40000, 100},
+  {"/Idle/get_phone.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/grumpy.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/idle_1.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/idle_2.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/idle_3.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/little_jump_in_place.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/looking_right.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/lose_balance.bin", PlayMode::HOLD, 5, 4000, 6000, 100},
+  {"/Idle/no_head.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/pull_card.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/pull_frame_glow.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/pull_orb.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/push.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/running.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/sad.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/shake.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/slide.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/startled.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/steady.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/strange_pose.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/thoughtful.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/upsidedown.bin", PlayMode::ONCE, 0, 0, 0, 100},
+  {"/Idle/walking.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/wave.bin", PlayMode::FORWARD, 0, 0, 0, 100},
+  {"/Idle/yanked.bin", PlayMode::ONCE, 0, 0, 0, 100},
+};
+const Clip *remote_pending = nullptr;
+// frasi dall'app: si prepara la meta' libera e si scambia solo al commit
+constexpr uint8_t PHRASE_MAX = 64;
+char phrase_slots[2][PHRASE_MAX][49] = {};
+uint8_t active_slot = 0, phrase_count = 0, staging_count = 0;
+bool staging_valid = false, manual_sign = false;
 State shown = State::IDLE;
 bool reacting = false; // reazione in corso: lo stato aspetta
 bool leaving = false;  // sta chiudendo l'animazione per cambiare stato
@@ -75,6 +121,12 @@ int hour = -1;
 unsigned long variant_timer = 0, variant_delay = 0;
 unsigned long last_sign_time = 0;
 int recent[3] = {-1, -1, -1};
+
+char message_text[64] = "";
+Icon message_icon = Icon::NONE;
+bool message_pending = false;
+unsigned long message_time = 0;
+char passkey_text[8] = "";
 
 int tap_count = 0;
 unsigned long last_tap_time = 0, last_touch_time = 0;
@@ -200,15 +252,25 @@ void start_variant() {
   recent[2] = recent[1];
   recent[1] = recent[0];
   recent[0] = chosen;
-  play(&VARIANTS[chosen]);
+  bool double_glance = strcmp(VARIANTS[chosen].path, "/Idle/looking_right.bin") == 0 && random(4) == 0;
+  play(&VARIANTS[chosen], double_glance ? &VARIANTS[chosen] : nullptr);
   Serial.printf("Variazione: %s\n", VARIANTS[chosen].path);
 }
 
 void draw_sign() {
   int ox, oy;
   sprite_canvas_origin(SIGN.path, &ox, &oy);
-  SignContent content = sign_pick_phrase(hour, umore_level(), umore_steps_today());
-  last_sign_time = millis(); // conta solo se il cartello si e' visto davvero
+  const Clip *clip = player_clip();
+  SignContent content;
+  if (clip == &PASSKEY_SIGN) {
+    content = {passkey_text, Icon::NONE};
+  } else if (clip == &MESSAGE_SIGN) {
+    content = {message_text, message_icon};
+  } else {
+    content = phrase_count ? SignContent{phrase_slots[active_slot][random(phrase_count)], Icon::NONE}
+                           : sign_pick_phrase(hour, umore_level());
+    last_sign_time = millis(); // conta solo se il cartello si e' visto davvero
+  }
   sprite_invalidate();
   sign_draw(content, ox + (int)(SIGN_X * SPRITE_SCALE), oy + (int)(SIGN_Y * SPRITE_SCALE),
             (int)(SIGN_W * SPRITE_SCALE), (int)(SIGN_H * SPRITE_SCALE));
@@ -227,7 +289,7 @@ bool calm() {
     return true;
   }
   return shown == State::IDLE && !busy() && !player_stopping() && is_variant(c) &&
-         (c->mode == PlayMode::ONCE || c->mode == PlayMode::LOOP);
+         (c->mode == PlayMode::ONCE || c->mode == PlayMode::FORWARD || c->mode == PlayMode::LOOP);
 }
 
 // si puo' interrompere per reagire: si sveglia, si rialza, e per le coccole
@@ -277,7 +339,7 @@ void handle_touch(TouchEvent touch) {
   } else if (tap_count >= 5) {
     tap_count = 0;
     umore_add(-8);
-    play(&TURN_AWAY, nullptr, nullptr, true);
+    play(&PUSH, &FED_UP, nullptr, true);
   } else if (tap_count >= 3) {
     umore_add(-3);
     play(&PUSH, &GRUMPY, nullptr, true);
@@ -329,6 +391,25 @@ void comportamento_update(State target, TouchEvent touch, bool jolt,
     }
   }
 
+  if (remote_pending && !busy()) {
+    const Clip *chosen = remote_pending;
+    remote_pending = nullptr;
+    play(chosen, nullptr, nullptr, true);
+  }
+
+  if (message_pending) {
+    bool can_show = (shown == State::IDLE || shown == State::WALKING) &&
+                    (calm() || interruptible(false));
+    if (millis() - message_time > MESSAGE_WAIT_MS) {
+      message_pending = false;
+    } else if (can_show) {
+      message_pending = false;
+      if (manual_sign) play(&MESSAGE_SIGN, nullptr, nullptr, true);
+      else play(&GLANCE_PHONE, &MESSAGE_SIGN, nullptr, true);
+      manual_sign = false;
+    }
+  }
+
   if (shown == State::IDLE && !busy() && player_clip() == &IDLE_BASE &&
       millis() - variant_timer >= variant_delay) {
     start_variant();
@@ -349,4 +430,57 @@ void comportamento_update(State target, TouchEvent touch, bool jolt,
 
   bool asleep = player_clip() == &SLEEP && player_holding();
   display_set_brightness(asleep ? SLEEP_BRIGHTNESS : 255);
+}
+
+void comportamento_notify(Icon icon, const char *text) {
+  manual_sign = false;
+  strlcpy(message_text, text, sizeof(message_text));
+  message_icon = icon;
+  message_time = millis();
+  message_pending = true;
+  Serial.println("Notifica in arrivo");
+}
+
+void comportamento_show_passkey(uint32_t code) {
+  snprintf(passkey_text, sizeof(passkey_text), "%06lu", (unsigned long)code);
+  play(&PASSKEY_SIGN, nullptr, nullptr, true);
+}
+
+void comportamento_pairing_done() {
+  if (player_clip() == &PASSKEY_SIGN) {
+    player_stop(StopStyle::GENTLE);
+  }
+}
+
+bool comportamento_sleeping() { return player_clip() == &SLEEP; }
+
+void comportamento_clear_phrases() {
+  phrase_count = staging_count = 0;
+  staging_valid = false;
+}
+
+void comportamento_command(uint8_t action, const char *text) {
+  if (action == 1) {
+    if (!valid_animation(text)) return;
+    char path[64];
+    snprintf(path, sizeof(path), "/Idle/%s.bin", text);
+    for (const Clip &clip : REMOTE_CLIPS) {
+      if (strcmp(clip.path, path) == 0) { remote_pending = &clip; break; }
+    }
+  } else if (action == 2) {
+    strlcpy(message_text, text, sizeof(message_text));
+    message_icon = Icon::NONE;
+    message_time = millis();
+    message_pending = manual_sign = true;
+  } else if (action == 3) {
+    staging_count = 0;
+    staging_valid = true;
+  } else if (action == 4 && staging_valid) {
+    if (staging_count == PHRASE_MAX) { staging_valid = false; return; }
+    strlcpy(phrase_slots[active_slot ^ 1][staging_count++], text, 49);
+  } else if (action == 5 && staging_valid) {
+    active_slot ^= 1;
+    phrase_count = staging_count;
+    staging_valid = false;
+  }
 }

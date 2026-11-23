@@ -51,3 +51,9 @@ long rtc_date_key() {
   RTC_DateTime now = rtc.getDateTime();
   return now.getYear() * 10000L + now.getMonth() * 100 + now.getDay();
 }
+
+void rtc_set(int year, int month, int day, int hour, int minute, int second) {
+  if (rtc_ok) {
+    rtc.setDateTime(year, month, day, hour, minute, second);
+  }
+}

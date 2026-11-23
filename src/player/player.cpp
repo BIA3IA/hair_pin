@@ -76,11 +76,8 @@ PlayerEvent step() {
       return PlayerEvent::NONE;
     }
     if (clip->mode == PlayMode::LOOP) {
-      bool quick_exit = stop_requested && stop_style == StopStyle::QUICK;
-      if (quick_exit) {
-        phase = Phase::RETURN;
-        return PlayerEvent::NONE;
-      }
+      // Anche l'uscita rapida termina il ciclo in avanti: invertire una
+      // camminata o una corsa farebbe arretrare i passi.
       if (frame == last && (stop_requested || time_up)) {
         phase = Phase::DONE; // il prossimo giro ripartirebbe dalla posa base
         return PlayerEvent::DONE;
@@ -89,6 +86,10 @@ PlayerEvent step() {
       return PlayerEvent::NONE;
     }
     if (stop_requested) {
+      if (clip->mode == PlayMode::FORWARD) {
+        phase = Phase::DONE;
+        return PlayerEvent::DONE;
+      }
       phase = Phase::RETURN;
       return PlayerEvent::NONE;
     }
