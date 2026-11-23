@@ -1,9 +1,37 @@
 #include "sprite.h"
-#include "../display/display.h"
 #include "../display/background.h"
+#include "../display/display.h"
 #include <LittleFS.h>
+#include <new>
+#include <utility>
 
-static SpriteHeader read_header(File &f) {
+namespace {
+File file;
+const char *file_path = nullptr;
+SpriteHeader header;
+
+// buffer che crescono soltanto: niente new/delete a ogni frame
+uint8_t *mask = nullptr;
+uint16_t *pixels = nullptr;
+uint16_t *canvas = nullptr, *shown = nullptr;
+size_t mask_cap = 0, pixels_cap = 0, canvas_cap = 0, shown_cap = 0;
+// zona dello schermo che corrisponde a "shown"; w = 0 se non valida
+int shown_x = 0, shown_y = 0, shown_w = 0, shown_h = 0;
+int cached_frame = -1;
+
+int16_t src_col[SCREEN_WIDTH * 2];
+int16_t src_row[SCREEN_HEIGHT * 2];
+
+template <typename T> bool reserve(T *&buf, size_t &cap, size_t count) {
+  if (count <= cap)
+    return true;
+  delete[] buf;
+  buf = new (std::nothrow) T[count];
+  cap = buf ? count : 0;
+  return buf != nullptr;
+}
+
+SpriteHeader read_header(File &f) {
   uint8_t b[SPRITE_HEADER_SIZE];
   f.read(b, SPRITE_HEADER_SIZE);
   SpriteHeader hd;
@@ -17,9 +45,28 @@ static SpriteHeader read_header(File &f) {
   return hd;
 }
 
+// tiene aperto l'ultimo file: riaprirlo a ogni frame costa millisecondi
+bool open_sprite(const char *path) {
+  if (file && file_path &&
+      (file_path == path || strcmp(file_path, path) == 0))
+    return true;
+  if (file)
+    file.close();
+  file_path = nullptr;
+  cached_frame = -1;
+  file = LittleFS.open(path, "r");
+  if (!file) {
+    Serial.printf("Impossibile aprire: %s\n", path);
+    return false;
+  }
+  header = read_header(file);
+  file_path = path;
+  return true;
+}
+
 // centra la tela originale, non il ritaglio
-static void screen_rect(const SpriteHeader &hd, float scale, int *x, int *y,
-                        int *dw, int *dh) {
+void screen_rect(const SpriteHeader &hd, float scale, int *x, int *y, int *dw,
+                 int *dh) {
   *dw = (int)(hd.w * scale);
   *dh = (int)(hd.h * scale);
   *x = (SCREEN_WIDTH - (int)(hd.canvas_w * scale)) / 2 +
@@ -28,192 +75,153 @@ static void screen_rect(const SpriteHeader &hd, float scale, int *x, int *y,
        (int)(hd.offset_y * scale);
 }
 
+bool load_frame(int frame) {
+  if (frame == cached_frame)
+    return true;
+  size_t count = (size_t)header.w * header.h;
+  size_t mask_bytes = (count + 7) / 8;
+  if (!reserve(mask, mask_cap, mask_bytes) ||
+      !reserve(pixels, pixels_cap, count)) {
+    Serial.println("Memoria finita per il frame!");
+    return false;
+  }
+  file.seek(SPRITE_HEADER_SIZE + frame * (mask_bytes + count * 2));
+  file.read(mask, mask_bytes);
+  // i pixel sono little-endian come la CPU: si leggono gia' come uint16_t
+  file.read((uint8_t *)pixels, count * 2);
+  cached_frame = frame;
+  return true;
+}
+// manda solo il tratto cambiato di ogni riga rispetto all'ultimo invio
+void push_changes(int left, int top, int w, int h) {
+  for (int r = 0; r < h; r++) {
+    uint16_t *now = canvas + r * w;
+    const uint16_t *before = shown + r * w;
+    int first = 0;
+    while (first < w && now[first] == before[first])
+      first++;
+    if (first == w)
+      continue;
+    int last = w - 1;
+    while (now[last] == before[last])
+      last--;
+    gfx->draw16bitRGBBitmap(left + first, top + r, now + first,
+                            last - first + 1, 1);
+  }
+}
+} // namespace
+
+void sprite_invalidate() { shown_w = 0; }
+
 void sprite_init() {
   if (!LittleFS.begin()) {
     Serial.println("Errore montaggio LittleFS!");
     return;
   }
 
-  File f = LittleFS.open("/Idle/idle_1.bin", "r");
-  if (!f) {
-    Serial.println("File non trovato!");
-    return;
+  // buffer gia' grandi abbastanza per qualsiasi sprite: la RAM non si frammenta
+  int left = SCREEN_WIDTH, top = SCREEN_HEIGHT, right = 0, bottom = 0;
+  File dir = LittleFS.open("/Idle");
+  for (File f = dir.openNextFile(); f; f = dir.openNextFile()) {
+    int x, y, dw, dh;
+    screen_rect(read_header(f), SPRITE_SCALE, &x, &y, &dw, &dh);
+    left = min(left, max(x, 0));
+    top = min(top, max(y, 0));
+    right = max(right, min(x + dw, SCREEN_WIDTH));
+    bottom = max(bottom, min(y + dh, SCREEN_HEIGHT));
   }
-
-  SpriteHeader hd = read_header(f);
-  f.close();
-
-  Serial.printf("width=%d height=%d frames=%d canvas=%dx%d offset=%d,%d\n",
-                hd.w, hd.h, hd.frame_count, hd.canvas_w, hd.canvas_h,
-                hd.offset_x, hd.offset_y);
-}
-
-void sprite_draw_frame(const char *path, int frameIndex, float scale) {
-  File f = LittleFS.open(path, "r");
-  if (!f) {
-    Serial.printf("Impossibile aprire: %s\n", path);
-    return;
+  if (right > left && bottom > top) {
+    size_t count = (size_t)(right - left) * (bottom - top);
+    reserve(canvas, canvas_cap, count);
+    reserve(shown, shown_cap, count);
   }
-
-  SpriteHeader hd = read_header(f);
-  uint16_t w = hd.w;
-  uint16_t h = hd.h;
-
-  int maskBytes = (w * h + 7) / 8;
-  int pixelBytes = w * h * 2;
-  int frameBytes = maskBytes + pixelBytes;
-
-  f.seek(SPRITE_HEADER_SIZE + frameIndex * frameBytes);
-
-  uint8_t *mask = new uint8_t[maskBytes];
-  uint8_t *pixels = new uint8_t[pixelBytes];
-  f.read(mask, maskBytes);
-  f.read(pixels, pixelBytes);
-  f.close();
-
-  int x, y, dw, dh;
-  screen_rect(hd, scale, &x, &y, &dw, &dh);
-
-  gfx->startWrite();
-  for (int dy = 0; dy < dh; dy++) {
-    int sy = (int)(dy / scale); // riga del pixel sorgente piu' vicino
-    for (int dx = 0; dx < dw; dx++) {
-      int sx = (int)(dx / scale); // colonna del pixel sorgente piu' vicino
-      int i = sy * w + sx;
-      bool opaque = (mask[i / 8] >> (i % 8)) & 1;
-      if (opaque) {
-        uint16_t color = pixels[i * 2] | (pixels[i * 2 + 1] << 8);
-        gfx->writePixel(x + dx, y + dy, color);
-      }
-    }
+  if (open_sprite("/Idle/idle_1.bin")) {
+    Serial.printf("width=%d height=%d frames=%d canvas=%dx%d offset=%d,%d\n",
+                  header.w, header.h, header.frame_count, header.canvas_w,
+                  header.canvas_h, header.offset_x, header.offset_y);
   }
-  gfx->endWrite();
-
-  delete[] mask;
-  delete[] pixels;
 }
 
 int sprite_get_frame_count(const char *path) {
-  File f = LittleFS.open(path, "r");
-  if (!f)
-    return 1;
-
-  SpriteHeader hd = read_header(f);
-  f.close();
-
-  return hd.frame_count;
+  return open_sprite(path) ? header.frame_count : 1;
 }
 
-void sprite_get_draw_rect(const char *path, float scale, int *x, int *y,
-                          int *dw, int *dh) {
-  File f = LittleFS.open(path, "r");
-  if (!f) {
-    *x = *y = *dw = *dh = 0;
-    return;
-  }
-
-  SpriteHeader hd = read_header(f);
-  f.close();
-
-  screen_rect(hd, scale, x, y, dw, dh);
-}
-
-void sprite_canvas_origin(const char *path, float scale, int *x, int *y) {
-  File f = LittleFS.open(path, "r");
-  if (!f) {
+void sprite_canvas_origin(const char *path, int *x, int *y) {
+  if (!open_sprite(path)) {
     *x = *y = 0;
     return;
   }
-
-  SpriteHeader hd = read_header(f);
-  f.close();
-
-  *x = (SCREEN_WIDTH - (int)(hd.canvas_w * scale)) / 2;
-  *y = (SCREEN_HEIGHT - (int)(hd.canvas_h * scale)) / 2;
+  *x = (SCREEN_WIDTH - (int)(header.canvas_w * SPRITE_SCALE)) / 2;
+  *y = (SCREEN_HEIGHT - (int)(header.canvas_h * SPRITE_SCALE)) / 2;
 }
 
-void rect_union(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh,
-                int *ux, int *uy, int *uw, int *uh) {
-  if (aw <= 0 || ah <= 0) {
-    *ux = bx;
-    *uy = by;
-    *uw = bw;
-    *uh = bh;
+void sprite_draw_frame_buffered(const char *path, int frame, int prev_x,
+                                int prev_y, int prev_dw, int prev_dh,
+                                int *out_x, int *out_y, int *out_dw,
+                                int *out_dh) {
+  if (!open_sprite(path) || frame < 0 || frame >= header.frame_count ||
+      !load_frame(frame))
     return;
-  }
-
-  int left = min(ax, bx);
-  int top = min(ay, by);
-  int right = max(ax + aw, bx + bw);
-  int bottom = max(ay + ah, by + bh);
-
-  *ux = left;
-  *uy = top;
-  *uw = right - left;
-  *uh = bottom - top;
-}
-
-void sprite_draw_frame_buffered(const char *path, int frameIndex, float scale,
-                                int prev_x, int prev_y, int prev_dw,
-                                int prev_dh, int *out_x, int *out_y,
-                                int *out_dw, int *out_dh) {
-  // Conserva solo il frame corrente: lo sfondo puo' aggiornarsi senza
-  // rileggere lo stesso asset dalla flash a ogni refresh.
-  static String cached_path;
-  static int cached_frame = -1;
-  static SpriteHeader hd;
-  static uint8_t *mask = nullptr;
-  static uint8_t *pixels = nullptr;
-  if (cached_path != path || cached_frame != frameIndex) {
-    File f = LittleFS.open(path, "r");
-    if (!f) {
-      Serial.printf("Impossibile aprire: %s\n", path);
-      return;
-    }
-    hd = read_header(f);
-    int maskBytes = (hd.w * hd.h + 7) / 8;
-    int pixelBytes = hd.w * hd.h * 2;
-    f.seek(SPRITE_HEADER_SIZE + frameIndex * (maskBytes + pixelBytes));
-    delete[] mask;
-    delete[] pixels;
-    mask = new uint8_t[maskBytes];
-    pixels = new uint8_t[pixelBytes];
-    f.read(mask, maskBytes);
-    f.read(pixels, pixelBytes);
-    cached_path = path;
-    cached_frame = frameIndex;
-  }
-  uint16_t w = hd.w;
+  const float scale = SPRITE_SCALE;
 
   int x, y, dw, dh;
-  screen_rect(hd, scale, &x, &y, &dw, &dh);
+  screen_rect(header, scale, &x, &y, &dw, &dh);
+  dw = min(dw, (int)(sizeof(src_col) / sizeof(src_col[0])));
+  dh = min(dh, (int)(sizeof(src_row) / sizeof(src_row[0])));
 
-  int ux, uy, uw, uh;
-  rect_union(prev_x, prev_y, prev_dw, prev_dh, x, y, dw, dh, &ux, &uy, &uw,
-             &uh);
+  // unione col rettangolo vecchio, tagliata ai bordi dello schermo
+  int left = x, top = y, right = x + dw, bottom = y + dh;
+  if (prev_dw > 0 && prev_dh > 0) {
+    left = min(left, prev_x);
+    top = min(top, prev_y);
+    right = max(right, prev_x + prev_dw);
+    bottom = max(bottom, prev_y + prev_dh);
+  }
+  left = max(left, 0);
+  top = max(top, 0);
+  right = min(right, SCREEN_WIDTH);
+  bottom = min(bottom, SCREEN_HEIGHT);
+  int uw = right - left, uh = bottom - top;
+  if (uw <= 0 || uh <= 0)
+    return;
 
-  uint16_t *buffer = new uint16_t[uw * uh];
-  memset(buffer, 0, uw * uh * sizeof(uint16_t)); // 0 = nero in RGB565
-  background_compose(buffer, ux, uy, uw, uh);
+  if (!reserve(canvas, canvas_cap, (size_t)uw * uh)) {
+    sprite_invalidate();
+    Serial.println("Memoria finita per il buffer!");
+    return;
+  }
+  background_compose(canvas, left, top, uw, uh);
 
-  for (int dy = 0; dy < dh; dy++) {
-    int sy = (int)(dy / scale);
-    for (int dx = 0; dx < dw; dx++) {
-      int sx = (int)(dx / scale);
-      int i = sy * w + sx;
-      bool opaque = (mask[i / 8] >> (i % 8)) & 1;
-      if (opaque) {
-        uint16_t color = pixels[i * 2] | (pixels[i * 2 + 1] << 8);
-        int buf_x = (x - ux) + dx;
-        int buf_y = (y - uy) + dy;
-        buffer[buf_y * uw + buf_x] = color;
-      }
+  // pixel sorgente piu' vicino, calcolato una volta per colonna e per riga
+  for (int dx = 0; dx < dw; dx++)
+    src_col[dx] = (int16_t)(dx / scale);
+  for (int dy = 0; dy < dh; dy++)
+    src_row[dy] = (int16_t)(dy / scale);
+
+  int dx0 = max(0, left - x), dx1 = min(dw, right - x);
+  int dy0 = max(0, top - y), dy1 = min(dh, bottom - y);
+  const int w = header.w;
+  for (int dy = dy0; dy < dy1; dy++) {
+    const int row = src_row[dy] * w;
+    uint16_t *out = canvas + (y + dy - top) * uw + (x - left);
+    for (int dx = dx0; dx < dx1; dx++) {
+      const int i = row + src_col[dx];
+      if ((mask[i >> 3] >> (i & 7)) & 1)
+        out[dx] = pixels[i];
     }
   }
 
-  gfx->draw16bitRGBBitmap(ux, uy, buffer, uw, uh);
-
-  delete[] buffer;
+  if (shown_w == uw && shown_h == uh && shown_x == left && shown_y == top) {
+    push_changes(left, top, uw, uh);
+  } else {
+    gfx->draw16bitRGBBitmap(left, top, canvas, uw, uh);
+  }
+  std::swap(canvas, shown);
+  std::swap(canvas_cap, shown_cap);
+  shown_x = left;
+  shown_y = top;
+  shown_w = uw;
+  shown_h = uh;
 
   *out_x = x;
   *out_y = y;

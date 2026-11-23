@@ -42,3 +42,12 @@ int rtc_hour() {
   }
   return rtc.getDateTime().getHour();
 }
+
+// es. 20261123; -1 se l'RTC non risponde
+long rtc_date_key() {
+  if (!rtc_ok) {
+    return -1;
+  }
+  RTC_DateTime now = rtc.getDateTime();
+  return now.getYear() * 10000L + now.getMonth() * 100 + now.getDay();
+}

@@ -2,11 +2,10 @@
 #pragma once
 
 struct SensorShakeState {
-  bool shaking;
-  bool rotating;        // soglia bassa, serve alla camminata
-  bool strong_rotation; // soglia alta, conta come scossa
+  bool shaking;      // scossa forte che dura
+  bool rotating;     // testa che si muove: i passi non contano
+  bool head_shaking; // "no" con la testa: rotazione avanti e indietro
 };
 
-float accel_magnitude(float ax, float ay, float az);
-SensorShakeState is_shaking(float magnitude, float gyro_magnitude,
-                            bool currently_shaking);
+SensorShakeState is_shaking(float linear_accel, float gyro_magnitude,
+                            float yaw_rate, float dt, bool currently_shaking);

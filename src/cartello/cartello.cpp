@@ -2,10 +2,19 @@
 #include "../display/display.h"
 #include <U8g2lib.h>
 
+enum class Kind : uint8_t { PLAIN, STEPS };
+
 struct Phrase {
   const char *text;
   int8_t from_hour, to_hour; // -1 = a qualsiasi ora
+  int8_t mood = -1;          // -1 = con qualsiasi umore
+  Icon icon = Icon::NONE;
+  Kind kind = Kind::PLAIN;
 };
+
+const int8_t FELICE = (int8_t)Mood::FELICE;
+const int8_t GIU = (int8_t)Mood::GIU;
+const int8_t TRISTE = (int8_t)Mood::TRISTE;
 
 const Phrase PHRASES[] = {
     {"FAME", 12, 14},
@@ -57,6 +66,20 @@ const Phrase PHRASES[] = {
     {"MAH", -1, -1},
     {"UFFA", -1, -1},
     {"Risolvo dopo", -1, -1},
+    {"Nanna", 23, 7, -1, Icon::MOON},
+    {"Che sonno", 22, 7, -1, Icon::MOON},
+    {"", -1, -1, FELICE, Icon::HEART},
+    {"Ti voglio bene", -1, -1, FELICE, Icon::HEART},
+    {"Che bello", -1, -1, FELICE, Icon::STAR},
+    {"Giornata top", -1, -1, FELICE, Icon::STAR},
+    {"EVVIVA", -1, -1, FELICE},
+    {"Mi annoio", -1, -1, GIU},
+    {"Coccole?", -1, -1, GIU, Icon::HEART},
+    {"Uff...", -1, -1, GIU},
+    {"Mi ignori?", -1, -1, TRISTE},
+    {"Mi manchi", -1, -1, TRISTE, Icon::HEART},
+    {"Sola soletta", -1, -1, TRISTE},
+    {"passi", -1, -1, -1, Icon::STEPS, Kind::STEPS},
 };
 const int PHRASE_COUNT = sizeof(PHRASES) / sizeof(PHRASES[0]);
 
@@ -86,6 +109,46 @@ const TextStyle *STYLES[] = {&HUGE, &BIG, &MEDIUM, &SMALL};
 const int STYLE_COUNT = sizeof(STYLES) / sizeof(STYLES[0]);
 
 static int last_phrase = -1;
+static char steps_text[24];
+
+const unsigned long STEPS_MIN = 1000; // sotto non vale la pena vantarsene
+
+// icone 8x8 in pixel art, un byte per riga (bit alto = pixel a sinistra)
+const uint8_t ICON_BITS[][8] = {
+    {},                                                     // NONE
+    {0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18, 0x00},       // HEART
+    {0x60, 0xE0, 0xE0, 0x66, 0x07, 0x07, 0x06, 0x00},       // STEPS
+    {0x1C, 0x30, 0x60, 0x60, 0x60, 0x30, 0x1C, 0x00},       // MOON
+    {0x10, 0x10, 0xFE, 0x7C, 0x38, 0x6C, 0x44, 0x00},       // STAR
+};
+const uint16_t ICON_COLORS[] = {0, 0xD948, SIGN_TEXT_COLOR, 0x5AD4, 0xE5A5};
+const int ICON_TEXT_SCALE = 2; // accanto al testo: 16x16 px
+const int ICON_GAP = 3;
+
+static void draw_icon(Icon icon, int x, int y, int scale) {
+  const uint8_t *bits = ICON_BITS[(int)icon];
+  for (int row = 0; row < 8; row++) {
+    for (int col = 0; col < 8; col++) {
+      if (bits[row] & (0x80 >> col)) {
+        gfx->fillRect(x + col * scale, y + row * scale, scale, scale,
+                      ICON_COLORS[(int)icon]);
+      }
+    }
+  }
+}
+
+static const char *phrase_text(const Phrase &p, unsigned long steps) {
+  if (p.kind != Kind::STEPS) {
+    return p.text;
+  }
+  if (steps >= 1000) {
+    snprintf(steps_text, sizeof(steps_text), "%lu.%03lu\n%s", steps / 1000,
+             steps % 1000, p.text);
+  } else {
+    snprintf(steps_text, sizeof(steps_text), "%lu\n%s", steps, p.text);
+  }
+  return steps_text;
+}
 
 static bool fits_hour(const Phrase &p, int hour) {
   if (p.from_hour < 0) {
@@ -100,29 +163,42 @@ static bool fits_hour(const Phrase &p, int hour) {
   return hour >= p.from_hour || hour < p.to_hour; // fascia che passa la mezzanotte
 }
 
-const char *sign_pick_phrase(int hour) {
+SignContent sign_pick_phrase(int hour, Mood mood, unsigned long steps) {
   int candidates[PHRASE_COUNT];
   int n = 0;
-
-  // se c'e' una frase legata all'ora attuale, una volta su due esce quella
-  if (random(2) == 0) {
+  auto collect = [&](auto wanted) {
+    n = 0;
     for (int i = 0; i < PHRASE_COUNT; i++) {
-      if (PHRASES[i].from_hour >= 0 && fits_hour(PHRASES[i], hour) &&
-          i != last_phrase) {
+      const Phrase &p = PHRASES[i];
+      bool usable = i != last_phrase && fits_hour(p, hour) &&
+                    (p.mood < 0 || p.mood == (int8_t)mood) &&
+                    (p.kind != Kind::STEPS || steps >= STEPS_MIN);
+      if (usable && wanted(p)) {
         candidates[n++] = i;
       }
     }
+  };
+
+  // passi del giorno, umore e ora: ognuno ha la sua occasione, poi le altre
+  if (steps >= STEPS_MIN && random(4) == 0) {
+    collect([](const Phrase &p) { return p.kind == Kind::STEPS; });
+  }
+  if (n == 0 && mood != Mood::NORMALE && random(2) == 0) {
+    collect([](const Phrase &p) { return p.mood >= 0; });
+  }
+  if (n == 0 && random(2) == 0) {
+    collect([](const Phrase &p) { return p.from_hour >= 0; });
   }
   if (n == 0) {
-    for (int i = 0; i < PHRASE_COUNT; i++) {
-      if (fits_hour(PHRASES[i], hour) && i != last_phrase) {
-        candidates[n++] = i;
-      }
-    }
+    collect([](const Phrase &p) { return p.kind == Kind::PLAIN; });
+  }
+  if (n == 0) {
+    return {"BOH", Icon::NONE};
   }
 
   last_phrase = candidates[random(n)];
-  return PHRASES[last_phrase].text;
+  const Phrase &p = PHRASES[last_phrase];
+  return {phrase_text(p, steps), p.icon};
 }
 
 static void use_style(const TextStyle &st) {
@@ -186,7 +262,25 @@ static bool wrap(const char *text, const TextStyle &st, int w, int h,
   return fits;
 }
 
-void sign_draw_text(const char *text, int x, int y, int w, int h) {
+static void draw_text(const char *text, int x, int y, int w, int h);
+
+void sign_draw(const SignContent &c, int x, int y, int w, int h) {
+  if (c.icon == Icon::NONE) {
+    draw_text(c.text, x, y, w, h);
+    return;
+  }
+  if (c.text[0] == '\0') { // solo l'icona, grande e in mezzo
+    int scale = max(1, min(min(w, h) - 8, 40) / 8);
+    draw_icon(c.icon, x + (w - 8 * scale) / 2, y + (h - 8 * scale) / 2, scale);
+    return;
+  }
+  int icon_w = 8 * ICON_TEXT_SCALE;
+  draw_icon(c.icon, x + SIDE_MARGIN, y + (h - icon_w) / 2, ICON_TEXT_SCALE);
+  int shift = icon_w + ICON_GAP; // il margine sinistro del testo resta
+  draw_text(c.text, x + shift, y, w - shift, h);
+}
+
+static void draw_text(const char *text, int x, int y, int w, int h) {
   char lines[MAX_LINES][MAX_LINE_BYTES];
   int line_count;
 
@@ -204,8 +298,7 @@ void sign_draw_text(const char *text, int x, int y, int w, int h) {
   use_style(*st);
   gfx->setTextColor(SIGN_TEXT_COLOR);
 
-  // misura i pixel veri di ogni riga (rispetto alla sua linea di base),
-  // cosi' il blocco di testo si centra davvero, anche in verticale
+  // centra sui pixel veri della scritta, non sul riquadro del font
   int16_t ink_x[MAX_LINES];
   uint16_t ink_w[MAX_LINES];
   int ink_top = INT16_MAX, ink_bottom = INT16_MIN;
@@ -233,9 +326,13 @@ void sign_draw_text(const char *text, int x, int y, int w, int h) {
 void sign_check_phrases(int w, int h) {
   char lines[MAX_LINES][MAX_LINE_BYTES];
   int line_count;
+  int icon_shift = 8 * ICON_TEXT_SCALE + ICON_GAP;
   for (int i = 0; i < PHRASE_COUNT; i++) {
-    if (!wrap(PHRASES[i].text, SMALL, w - 2 * SIDE_MARGIN, h, lines, &line_count)) {
-      Serial.printf("Frase troppo lunga per il cartoncino: %s\n", PHRASES[i].text);
+    const Phrase &p = PHRASES[i];
+    const char *text = phrase_text(p, 88888); // il numero piu' largo possibile
+    int text_w = w - 2 * SIDE_MARGIN - (p.icon != Icon::NONE ? icon_shift : 0);
+    if (text[0] && !wrap(text, SMALL, text_w, h, lines, &line_count)) {
+      Serial.printf("Frase troppo lunga per il cartoncino: %s\n", text);
     }
   }
 }

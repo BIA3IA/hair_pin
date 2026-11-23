@@ -1,6 +1,6 @@
+#pragma once
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
-extern Arduino_GFX *gfx;
 
 #define LCD_SCK 1
 #define LCD_DIN 2
@@ -9,7 +9,7 @@ extern Arduino_GFX *gfx;
 #define LCD_RST 4
 #define LCD_BL 6
 
-#define GFX_BL LCD_BL
+extern Arduino_GFX *gfx;
 
 void display_init();
-void display_test();
+void display_set_brightness(uint8_t level); // 0 spento, 255 massimo

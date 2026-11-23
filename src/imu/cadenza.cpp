@@ -2,11 +2,13 @@
 
 static unsigned long prev_interval = 0;
 static bool walking = false;
+static int new_steps = 0;
 
 
 bool is_walking(bool step_this_tick, bool is_rotating) {
-  const unsigned long MIN_STEP_INTERVAL_MS = 250;
-  const unsigned long MAX_STEP_INTERVAL_MS = 900;
+  // camminando 430-860 ms fra un passo e l'altro, correndo ~300-400
+  const unsigned long MIN_STEP_INTERVAL_MS = 280;
+  const unsigned long MAX_STEP_INTERVAL_MS = 1000;
   const float MAX_INTERVAL_RATIO = 1.5;
   const unsigned long WALKING_TIMEOUT_MS = 1200;
 
@@ -45,8 +47,11 @@ bool is_walking(bool step_this_tick, bool is_rotating) {
     }
     last_step_time = now;
 
-    if (consistent_steps >= 2) {
+    if (walking) {
+      new_steps++;
+    } else if (consistent_steps >= 2) {
       walking = true;
+      new_steps += consistent_steps + 1; // anche i passi che l'hanno fatta partire
     }
   }
 
@@ -73,4 +78,10 @@ bool is_running() {
     running = prev_interval < RUN_ENTRY_MS;
   }
   return running;
+}
+
+int walking_take_steps() {
+  int n = new_steps;
+  new_steps = 0;
+  return n;
 }

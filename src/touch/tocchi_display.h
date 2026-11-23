@@ -3,5 +3,7 @@
 
 #define TOUCH_IRQ 11
 
+enum class TouchEvent { NONE, TAP, LONG_PRESS };
+
 void touch_init();
-bool touch_tapped(); 
+TouchEvent touch_update(); // da chiamare a ogni giro del loop
