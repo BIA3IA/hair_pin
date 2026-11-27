@@ -11,6 +11,8 @@ void comportamento_notify(Icon icon, const char *text);
 void comportamento_show_passkey(uint32_t code);
 void comportamento_pairing_done();
 bool comportamento_sleeping();
+void comportamento_set_brightness(uint8_t level); // salvata in memoria
+uint8_t comportamento_brightness();
 
 void comportamento_command(uint8_t action, const char *text);
 void comportamento_clear_phrases();

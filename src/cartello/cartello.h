@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #pragma once
-#include "../umore/umore.h"
 
 // stesso ordine del protocollo Bluetooth
 enum class Icon : uint8_t { NONE, HEART, STEPS, MOON, STAR, MESSAGE, PHONE, MAIL, BELL, WHATSAPP, TELEGRAM, INSTAGRAM };
@@ -10,6 +9,6 @@ struct SignContent {
   Icon icon;
 };
 
-SignContent sign_pick_phrase(int hour, Mood mood);
+SignContent sign_pick_phrase(int hour);
 void sign_draw(const SignContent &c, int x, int y, int w, int h);
 void sign_check_phrases(int w, int h); // stampa quelle che non ci stanno

@@ -12,8 +12,6 @@ enum class PlayMode {
   SIGN,     // tira fuori il cartello, lo tiene fermo, lo rimette via
 };
 
-// che aria ha: decide quanto spesso esce secondo l'umore
-enum class Tone { CALM, HAPPY, GLOOMY };
 
 struct Clip {
   const char *path;
@@ -21,7 +19,6 @@ struct Clip {
   uint8_t hold_frames;
   uint32_t min_ms, max_ms; // quanto dura; 0 = finche' non la fermi
   uint16_t frame_ms;
-  Tone tone = Tone::CALM;
 };
 
 enum class StopStyle {

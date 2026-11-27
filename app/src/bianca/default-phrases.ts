@@ -186,47 +186,42 @@ export const DEFAULT_PHRASE_GROUPS: readonly { title: string; phrases: readonly 
     ]
   },
   {
-    "title": "Secondo l'umore",
+    "title": "Dolce",
     "phrases": [
       {
-        "text": "Ti voglio bene",
-        "when": "quando è felice"
+        "text": "Ti voglio bene"
       },
       {
-        "text": "Che bello",
-        "when": "quando è felice"
+        "text": "Che bello"
       },
       {
-        "text": "Giornata top",
-        "when": "quando è felice"
+        "text": "Giornata top"
       },
       {
-        "text": "EVVIVA",
-        "when": "quando è felice"
+        "text": "EVVIVA"
       },
       {
-        "text": "Mi annoio",
-        "when": "quando è giù"
+        "text": "Coccole?"
       },
       {
-        "text": "Coccole?",
-        "when": "quando è giù"
+        "text": "Mi manchi"
+      }
+    ]
+  },
+  {
+    "title": "Annoiata",
+    "phrases": [
+      {
+        "text": "Mi annoio"
       },
       {
-        "text": "Uff...",
-        "when": "quando è giù"
+        "text": "Uff..."
       },
       {
-        "text": "Mi ignori?",
-        "when": "quando è triste"
+        "text": "Mi ignori?"
       },
       {
-        "text": "Mi manchi",
-        "when": "quando è triste"
-      },
-      {
-        "text": "Sola soletta",
-        "when": "quando è triste"
+        "text": "Sola soletta"
       }
     ]
   }

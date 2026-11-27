@@ -8,6 +8,7 @@
 #include <Wire.h>
 
 SensorQMI8658 qmi;
+static bool found = false;
 
 void imu_init() {
   if (!qmi.begin(Wire, QMI8658_L_SLAVE_ADDRESS, I2C_SDA, I2C_SCL)) {
@@ -24,6 +25,7 @@ void imu_init() {
                       SensorQMI8658::LPF_MODE_3);
   qmi.enableAccelerometer();
   qmi.enableGyroscope();
+  found = true;
 }
 
 static bool jolt = false;
@@ -115,10 +117,13 @@ SensorState imu_update() {
   return last_state;
 }
 
-int imu_take_steps() { return walking_take_steps(); }
 
 bool imu_take_jolt() {
   bool j = jolt;
   jolt = false;
   return j;
+}
+
+void imu_sleep() {
+  if (found) qmi.powerDown();
 }

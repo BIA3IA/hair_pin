@@ -18,3 +18,11 @@ test('segnala i caratteri assenti nei font del display', () => {
   assert.deepEqual(layoutSign('Caffè').unsupported, []);
   assert.deepEqual(layoutSign('Ciao 💜').unsupported, ['💜']);
 });
+
+test('le percentuali della batteria entrano sul cartello', () => {
+  for (let percentage = 0; percentage <= 100; percentage++) {
+    const layout = layoutSign(`${percentage}%`);
+    assert.equal(layout.fits, true);
+    assert.deepEqual(layout.unsupported, []);
+  }
+});

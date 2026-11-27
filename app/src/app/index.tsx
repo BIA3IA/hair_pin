@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import type { AnimationName } from '@/bianca/frames';
 import { ANIMATION_LABELS, ANIMATION_NAMES } from '@/bianca/labels';
-import { moodLabel } from '@/bianca/mood';
 import { BellIcon } from '@/components/BellIcon';
+import { BatteryStatus } from '@/components/BatteryStatus';
 import { BiancaSprite } from '@/components/BiancaSprite';
 import { BluetoothIcon } from '@/components/BluetoothIcon';
+import { BrightnessPicker } from '@/components/BrightnessPicker';
 import { IconButton } from '@/components/IconButton';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { PixelButton } from '@/components/PixelButton';
@@ -16,6 +17,7 @@ import { Sparkles } from '@/components/Sparkles';
 import { StatusLine } from '@/components/StatusLine';
 import { useBianca } from '@/hooks/useBianca';
 import { useSend } from '@/hooks/useSend';
+import BiancaLink from '../../modules/bianca-link';
 
 type Panel = 'link' | 'notifications';
 
@@ -26,12 +28,12 @@ export default function Home() {
   const [panel, setPanel] = useState<Panel | null>(null);
   const { sending, feedback, send } = useSend();
   const connected = link.phase === 'connected';
+  const sleeping = link.phase === 'sleeping';
   const busy = link.phase === 'pairing' || link.phase === 'connecting';
   const play = (name: AnimationName) =>
     send([1], [name], `${ANIMATION_LABELS[name]}: inviata a Bianca`);
   const surprise = () => play(SURPRISES[Math.floor(Math.random() * SURPRISES.length)]!);
 
-  const mood = link.status ? (link.status.sleeping ? 'Dorme' : moodLabel(link.status.mood)) : '—';
   return (
     <>
       <Screen>
@@ -58,11 +60,16 @@ export default function Home() {
           <BiancaSprite />
           <View className="bg-plum-700 h-1 w-36 rounded-full" />
         </View>
-
-        <View className="border-plum-700 bg-plum-900 flex-row items-center justify-between rounded-3xl border-2 px-5 py-4">
-          <Text className="font-body text-mist text-sm tracking-widest uppercase">Umore</Text>
-          <Text className="font-pixel text-paper text-2xl">{mood}</Text>
-        </View>
+        <BatteryStatus connected={connected} percentage={link.status?.battery} />
+        <BrightnessPicker connected={connected} brightness={link.status?.brightness} />
+        {sleeping && (
+          <Text
+            accessibilityLiveRegion="polite"
+            className="font-body text-mist text-center text-sm"
+          >
+            {link.message}
+          </Text>
+        )}
 
         <View className="gap-4">
           <PixelButton
@@ -81,6 +88,13 @@ export default function Home() {
             variant="secondary"
             onPress={() => router.push('/cartello')}
           />
+          <PixelButton
+            label="Fai dormire Bianca"
+            variant="secondary"
+            disabled={!connected}
+            busy={sending}
+            onPress={() => void BiancaLink.sleep().catch(() => undefined)}
+          />
           {feedback !== '' && (
             <Text
               accessibilityLiveRegion="polite"
@@ -93,8 +107,11 @@ export default function Home() {
       </Screen>
 
       <Popup title="Collegamento" visible={panel === 'link'} close={() => setPanel(null)}>
-        <StatusLine label={link.message} tone={connected ? 'on' : busy ? 'waiting' : 'off'} />
-        {!connected && (
+        <StatusLine
+          label={link.message}
+          tone={connected ? 'on' : busy || sleeping ? 'waiting' : 'off'}
+        />
+        {!connected && !sleeping && (
           <Text className="font-body text-mist text-base leading-6">
             Per il primo abbinamento riaccendi Bianca e collegala entro due minuti: il codice
             compare sul suo cartello.

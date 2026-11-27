@@ -3,8 +3,9 @@
 #include "../display/display.h"
 #include "../player/player.h"
 #include "../sprites/sprite.h"
-#include "../umore/umore.h"
 #include "../ble/protocollo.h"
+#include "../batteria/batteria.h"
+#include <Preferences.h>
 
 namespace {
 // le durate delle HOLD contano dall'inizio, compresa la parte in avanti
@@ -29,26 +30,26 @@ const Clip VARIANTS[] = {
     {"/Idle/looking_right.bin", PlayMode::FORWARD, 0, 0, 0, 160},
     {"/Idle/idle_2.bin", PlayMode::LOOP, 0, 20000, 40000, 100},
     {"/Idle/idle_3.bin", PlayMode::LOOP, 0, 20000, 40000, 100},
-    {"/Idle/little_jump_in_place.bin", PlayMode::LOOP, 0, 25000, 45000, 100, Tone::HAPPY},
-    {"/Idle/bouncing.bin", PlayMode::LOOP, 0, 8000, 15000, 100, Tone::HAPPY},
-    {"/Idle/falling_tired.bin", PlayMode::HOLD, 1, 20000, 40000, 100, Tone::GLOOMY},
-    {"/Idle/dance.bin", PlayMode::HOLD, 3, 2000, 4000, 100, Tone::HAPPY},
+    {"/Idle/little_jump_in_place.bin", PlayMode::LOOP, 0, 25000, 45000, 100},
+    {"/Idle/bouncing.bin", PlayMode::LOOP, 0, 8000, 15000, 100},
+    {"/Idle/falling_tired.bin", PlayMode::HOLD, 1, 20000, 40000, 100},
+    {"/Idle/dance.bin", PlayMode::HOLD, 3, 2000, 4000, 100},
     {"/Idle/strange_pose.bin", PlayMode::FORWARD, 0, 0, 0, 120},
     {"/Idle/get_phone.bin", PlayMode::HOLD, 3, 3000, 6000, 100},
-    {"/Idle/pull_frame_glow.bin", PlayMode::HOLD, 3, 3000, 5000, 100, Tone::HAPPY},
-    {"/Idle/pull_orb.bin", PlayMode::HOLD, 3, 3000, 5000, 100, Tone::HAPPY},
-    {"/Idle/wave.bin", PlayMode::FORWARD, 0, 0, 0, 90, Tone::HAPPY},
-    {"/Idle/sad.bin", PlayMode::HOLD, 4, 7000, 12000, 120, Tone::GLOOMY},
-    {"/Idle/grumpy.bin", PlayMode::HOLD, 6, 6000, 10000, 110, Tone::GLOOMY},
+    {"/Idle/pull_frame_glow.bin", PlayMode::HOLD, 3, 3000, 5000, 100},
+    {"/Idle/pull_orb.bin", PlayMode::HOLD, 3, 3000, 5000, 100},
+    {"/Idle/wave.bin", PlayMode::FORWARD, 0, 0, 0, 90},
+    {"/Idle/sad.bin", PlayMode::HOLD, 4, 7000, 12000, 120},
+    {"/Idle/grumpy.bin", PlayMode::HOLD, 6, 6000, 10000, 110},
 };
 const int VARIANT_COUNT = sizeof(VARIANTS) / sizeof(VARIANTS[0]);
 
 const Clip SIGN = {"/Idle/pull_card.bin", PlayMode::SIGN, 0, 6700, 9700, 100};
+const Clip BATTERY_SIGN = SIGN;
 const Clip SLEEP = {"/Idle/falling_asleep.bin", PlayMode::HOLD, 3, 1800000, 3600000, 160};
 
 const Clip PUSH = {"/Idle/push.bin", PlayMode::FORWARD, 0, 0, 0, 100};
 const Clip BEAT_YOU = {"/Idle/beat_you.bin", PlayMode::HOLD, 3, 2800, 4300, 120};
-const Clip HAPPY_HOP = {"/Idle/little_jump_in_place.bin", PlayMode::FORWARD, 0, 0, 0, 90};
 const Clip GRUMPY = {"/Idle/grumpy.bin", PlayMode::HOLD, 6, 4000, 6000, 110};
 const Clip FED_UP = {"/Idle/grumpy.bin", PlayMode::HOLD, 6, 8000, 11000, 110}; // basta tocchi
 const Clip CUDDLED = {"/Idle/cuddled.bin", PlayMode::HOLD, 4, 4500, 6000, 110};
@@ -120,6 +121,7 @@ int hour = -1;
 
 unsigned long variant_timer = 0, variant_delay = 0;
 unsigned long last_sign_time = 0;
+unsigned long last_battery_sign = 0, battery_sign_delay = 0;
 int recent[3] = {-1, -1, -1};
 
 char message_text[64] = "";
@@ -127,6 +129,8 @@ Icon message_icon = Icon::NONE;
 bool message_pending = false;
 unsigned long message_time = 0;
 char passkey_text[8] = "";
+
+uint8_t brightness = 255; // scelta dall'app, resta dopo i riavvii
 
 int tap_count = 0;
 unsigned long last_tap_time = 0, last_touch_time = 0;
@@ -166,11 +170,6 @@ void start_state(State state) {
   queue_len = queue_pos = 0;
   player_start(clip_for(state));
   Serial.printf("Stato %d\n", (int)state);
-  if (state == State::SHAKEN) {
-    umore_add(-3);
-  } else if (state == State::UPSIDE_DOWN) {
-    umore_add(-2);
-  }
   if (state == State::IDLE) {
     schedule_variant();
   }
@@ -207,19 +206,14 @@ void play(const Clip *a, const Clip *b = nullptr, const Clip *c = nullptr,
   }
 }
 
-// peso di ogni tono secondo l'umore
-int tone_weight(Tone tone) {
-  //                          CALM HAPPY GLOOMY
-  static const int W[4][3] = {{2, 0, 5},  // triste
-                              {3, 1, 3},  // giu'
-                              {3, 2, 1},  // normale
-                              {2, 5, 0}}; // felice
-  return W[(int)umore_level()][(int)tone];
-}
-
 void start_variant() {
   if (is_night()) {
     play(&SLEEP);
+    return;
+  }
+  if (batteria_percentuale() <= 100 && millis() - last_battery_sign >= battery_sign_delay &&
+      millis() - last_sign_time >= SIGN_COOLDOWN_MS) {
+    play(&BATTERY_SIGN);
     return;
   }
   if (millis() - last_sign_time >= SIGN_COOLDOWN_MS && random(100) < SIGN_CHANCE) {
@@ -227,28 +221,13 @@ void start_variant() {
     return;
   }
 
-  int candidates[VARIANT_COUNT], weights[VARIANT_COUNT];
-  int count = 0, total = 0;
+  // a caso, ma non una delle ultime tre
+  int candidates[VARIANT_COUNT];
+  int count = 0;
   for (int i = 0; i < VARIANT_COUNT; i++) {
-    int w = tone_weight(VARIANTS[i].tone);
-    if (w > 0 && i != recent[0] && i != recent[1] && i != recent[2]) {
-      candidates[count] = i;
-      weights[count++] = w;
-      total += w;
-    }
+    if (i != recent[0] && i != recent[1] && i != recent[2]) candidates[count++] = i;
   }
-  if (count == 0) {
-    schedule_variant();
-    return;
-  }
-  int pick = random(total), chosen = candidates[count - 1];
-  for (int i = 0; i < count; i++) {
-    if (pick < weights[i]) {
-      chosen = candidates[i];
-      break;
-    }
-    pick -= weights[i];
-  }
+  int chosen = candidates[random(count)];
   recent[2] = recent[1];
   recent[1] = recent[0];
   recent[0] = chosen;
@@ -262,13 +241,19 @@ void draw_sign() {
   sprite_canvas_origin(SIGN.path, &ox, &oy);
   const Clip *clip = player_clip();
   SignContent content;
+  char battery_text[8];
   if (clip == &PASSKEY_SIGN) {
     content = {passkey_text, Icon::NONE};
   } else if (clip == &MESSAGE_SIGN) {
     content = {message_text, message_icon};
+  } else if (clip == &BATTERY_SIGN && batteria_percentuale() <= 100) {
+    snprintf(battery_text, sizeof(battery_text), "%u%%", batteria_percentuale());
+    content = {battery_text, Icon::NONE};
+    last_sign_time = last_battery_sign = millis();
+    battery_sign_delay = random(10UL * 60000, 20UL * 60000);
   } else {
     content = phrase_count ? SignContent{phrase_slots[active_slot][random(phrase_count)], Icon::NONE}
-                           : sign_pick_phrase(hour, umore_level());
+                           : sign_pick_phrase(hour);
     last_sign_time = millis(); // conta solo se il cartello si e' visto davvero
   }
   sprite_invalidate();
@@ -294,6 +279,11 @@ bool calm() {
 
 // si puo' interrompere per reagire: si sveglia, si rialza, e per le coccole
 // anche quando e' triste o imbronciata
+bool comforting(const Clip *c) {
+  return c->mode == PlayMode::HOLD &&
+         (strstr(c->path, "/sad.bin") || strstr(c->path, "/grumpy.bin") || strstr(c->path, "/falling_tired.bin"));
+}
+
 bool interruptible(bool cuddle) {
   const Clip *c = player_clip();
   if (busy() || shown != State::IDLE || player_stopping()) {
@@ -305,7 +295,7 @@ bool interruptible(bool cuddle) {
   if (strcmp(c->path, "/Idle/falling_tired.bin") == 0) {
     return player_holding();
   }
-  return cuddle && c->tone == Tone::GLOOMY && c->mode == PlayMode::HOLD;
+  return cuddle && comforting(c);
 }
 
 void handle_touch(TouchEvent touch) {
@@ -317,11 +307,9 @@ void handle_touch(TouchEvent touch) {
   bool long_absence = now - last_touch_time >= LONG_ABSENCE_MS;
   bool was_sleeping = player_clip() == &SLEEP;
   last_touch_time = now;
-  umore_attention();
 
   if (cuddle) {
     tap_count = 0;
-    umore_add(8);
     play(&CUDDLED, nullptr, nullptr, true);
     Serial.println("Coccole");
     return;
@@ -334,21 +322,14 @@ void handle_touch(TouchEvent touch) {
   last_tap_time = now;
 
   if (was_sleeping) {
-    umore_add(-1);
     play(&GRUMPY, nullptr, nullptr, true);
   } else if (tap_count >= 5) {
     tap_count = 0;
-    umore_add(-8);
     play(&PUSH, &FED_UP, nullptr, true);
   } else if (tap_count >= 3) {
-    umore_add(-3);
     play(&PUSH, &GRUMPY, nullptr, true);
   } else if (long_absence) {
-    umore_add(2);
     play(&WAVE, nullptr, nullptr, true);
-  } else if (umore_level() == Mood::FELICE) {
-    umore_add(1);
-    play(&HAPPY_HOP, nullptr, nullptr, true);
   } else {
     play(&PUSH, &BEAT_YOU, nullptr, true);
   }
@@ -358,6 +339,12 @@ void handle_touch(TouchEvent touch) {
 
 void comportamento_init(int current_hour) {
   hour = current_hour;
+  Preferences prefs;
+  prefs.begin("bianca", true);
+  brightness = max<uint8_t>(prefs.getUChar("luce", 255), MIN_BRIGHTNESS);
+  prefs.end();
+  last_battery_sign = millis();
+  battery_sign_delay = random(10UL * 60000, 20UL * 60000);
   sign_check_phrases((int)(SIGN_W * SPRITE_SCALE), (int)(SIGN_H * SPRITE_SCALE));
   start_state(State::IDLE);
   last_touch_time = millis();
@@ -374,7 +361,6 @@ void comportamento_update(State target, TouchEvent touch, bool jolt,
 
   bool can_startle = shown == State::IDLE && (calm() || interruptible(false));
   if (jolt && can_startle) {
-    umore_add(-1);
     play(&STARTLED, nullptr, nullptr, true);
     Serial.println("Spavento");
   }
@@ -429,7 +415,7 @@ void comportamento_update(State target, TouchEvent touch, bool jolt,
   }
 
   bool asleep = player_clip() == &SLEEP && player_holding();
-  display_set_brightness(asleep ? SLEEP_BRIGHTNESS : 255);
+  display_set_brightness(asleep ? min(SLEEP_BRIGHTNESS, brightness) : brightness);
 }
 
 void comportamento_notify(Icon icon, const char *text) {
@@ -451,6 +437,18 @@ void comportamento_pairing_done() {
     player_stop(StopStyle::GENTLE);
   }
 }
+
+void comportamento_set_brightness(uint8_t level) {
+  if (level == brightness) return;
+  brightness = level;
+  Preferences prefs;
+  prefs.begin("bianca", false);
+  prefs.putUChar("luce", level);
+  prefs.end();
+  Serial.printf("Luminosita' %u\n", level);
+}
+
+uint8_t comportamento_brightness() { return brightness; }
 
 bool comportamento_sleeping() { return player_clip() == &SLEEP; }
 

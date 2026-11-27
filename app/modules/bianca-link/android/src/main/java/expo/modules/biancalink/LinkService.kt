@@ -20,6 +20,9 @@ class LinkService : Service() {
   private var notificationInFlight: NotificationItem? = null
   private val commandTimeout = Runnable { failed("Invio del comando scaduto") }
 
+  // dopo "dormi" la disconnessione è attesa: si riprova spesso finché non la si sveglia
+  private var asleep = false
+
   private val connected get() = LinkState.value["phase"] == "connected" && gatt != null
 
   private fun enqueue(packets: List<ByteArray>, done: (String?) -> Unit) {
@@ -61,6 +64,12 @@ class LinkService : Service() {
     require(actions.size == texts.size && actions.size in 1..BundleRules.MAX_PHRASES + 2) { "Numero di comandi non valido" }
     val packets = actions.zip(texts).map { (action, text) -> Protocol.command(action, text) }
     enqueue(packets) { error -> if (error == null) promise.resolve(null) else promise.reject("LINK_ERROR", error, null) }
+  }
+
+  fun sendSleep(promise: Promise) {
+    enqueue(listOf(Protocol.command(Protocol.SLEEP, ""))) { error ->
+      if (error == null) { asleep = true; promise.resolve(null) } else promise.reject("LINK_ERROR", error, null)
+    }
   }
 
   // il bundle scelto nell'app sostituisce le frasi della molletta finche' e' collegata
@@ -135,7 +144,7 @@ class LinkService : Service() {
     if (address == null) { stopSelf(); return }
     handler.removeCallbacks(timeout)
     gatt?.close()
-    LinkState.update("connecting", "Collegamento a Bianca…")
+    if (!asleep) LinkState.update("connecting", "Collegamento a Bianca…")
     gatt = adapter.getRemoteDevice(address.uppercase(Locale.ROOT)).connectGatt(this, false, callback, BluetoothDevice.TRANSPORT_LE)
     handler.postDelayed(timeout, 90000)
   }
@@ -156,10 +165,12 @@ class LinkService : Service() {
     gatt?.close()
     gatt = null
     if (stopped) return
-    LinkState.update("error", message)
+    if (asleep) LinkState.update("sleeping", "Bianca dorme: tocca lo schermo per svegliarla")
+    else LinkState.update("error", message)
     handler.removeCallbacks(retry)
     val delays = longArrayOf(1000, 2000, 5000, 10000, 30000)
-    handler.postDelayed(retry, delays[attempt.coerceAtMost(delays.lastIndex)])
+    val last = if (asleep) 2 else delays.lastIndex
+    handler.postDelayed(retry, delays[attempt.coerceAtMost(last)])
     attempt++
   }
 
@@ -230,6 +241,7 @@ class LinkService : Service() {
     if (status == null) { failed("Versione del protocollo non supportata"); return }
     handler.removeCallbacks(timeout)
     attempt = 0
+    asleep = false
     val justConnected = LinkState.value["phase"] != "connected"
     LinkState.update("connected", "Bianca è collegata", status)
     if (justConnected) applyActiveBundle()

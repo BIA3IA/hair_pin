@@ -12,13 +12,18 @@ internal object Protocol {
   val status = UUID.fromString("6b4747a6-1e7f-48c9-aa59-ddd21c5a844d")
   val cccd = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
-  // azioni: 1 animazione, 2 cartello, 3-4-5 bundle (inizio, frase, conferma)
+  const val BRIGHTNESS = 6
+  const val SLEEP = 7
+  const val MIN_BRIGHTNESS = 10
+
+  // azioni: 1 animazione, 2 cartello, 3-4-5 bundle (inizio, frase, conferma), 6 luminosità, 7 dormi
   fun command(action: Int, text: String): ByteArray {
-    require(action in 1..5) { "Comando non valido" }
+    require(action in 1..SLEEP) { "Comando non valido" }
+    require(action != BRIGHTNESS || text.toIntOrNull() in MIN_BRIGHTNESS..255) { "Luminosità non valida" }
     val bytes = text.toByteArray(Charsets.UTF_8)
     require(bytes.size <= 48) { "La frase supera 48 byte UTF-8" }
     require(action !in listOf(1, 2, 4) || text.isNotBlank()) { "Testo vuoto" }
-    require(action !in listOf(3, 5) || text.isEmpty()) { "Comando senza testo richiesto" }
+    require(action !in listOf(3, 5, SLEEP) || text.isEmpty()) { "Comando senza testo richiesto" }
     return byteArrayOf(1, 0, action.toByte(), bytes.size.toByte()) + bytes
   }
 
@@ -37,12 +42,12 @@ internal object Protocol {
       .put(now.get(Calendar.SECOND).toByte()).array()
   }
 
+  // STATUS v3: versione, flag (bit 0 = dorme), batteria (255 = sconosciuta), luminosità
   fun decodeStatus(value: ByteArray): Map<String, Any>? {
-    if (value.size != 8 || value[0].toInt() != 1) return null
-    val bytes = ByteBuffer.wrap(value).order(ByteOrder.LITTLE_ENDIAN)
-    return mapOf("mood" to (value[1].toInt() and 255),
-      "steps" to (bytes.getInt(2).toLong() and 0xffffffffL),
-      "sleeping" to (value[6].toInt() and 1 != 0),
-      "battery" to (value[7].toInt() and 255))
+    if (value.size != 4 || value[0].toInt() != 3) return null
+    return mapOf(
+      "sleeping" to (value[1].toInt() and 1 != 0),
+      "battery" to (value[2].toInt() and 255),
+      "brightness" to (value[3].toInt() and 255))
   }
 }

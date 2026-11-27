@@ -107,6 +107,11 @@ class BiancaLinkModule : Module() {
       if (service == null) promise.reject("DISCONNECTED", "Collega prima la molletta", null)
       else service.sendCommands(actions, texts, promise)
     }.runOnQueue(Queues.MAIN)
+    AsyncFunction("sleep") { promise: Promise ->
+      val service = LinkService.instance
+      if (service == null) promise.reject("DISCONNECTED", "Collega prima la molletta", null)
+      else service.sendSleep(promise)
+    }.runOnQueue(Queues.MAIN)
     AsyncFunction("disconnect") {
       generation++
       val context = requireNotNull(appContext.reactContext)

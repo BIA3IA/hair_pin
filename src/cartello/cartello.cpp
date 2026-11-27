@@ -5,13 +5,9 @@
 struct Phrase {
   const char *text;
   int8_t from_hour, to_hour; // -1 = a qualsiasi ora
-  int8_t mood = -1;          // -1 = con qualsiasi umore
   Icon icon = Icon::NONE;
 };
 
-const int8_t FELICE = (int8_t)Mood::FELICE;
-const int8_t GIU = (int8_t)Mood::GIU;
-const int8_t TRISTE = (int8_t)Mood::TRISTE;
 
 const Phrase PHRASES[] = {
     {"FAME", 12, 14},
@@ -63,19 +59,19 @@ const Phrase PHRASES[] = {
     {"MAH", -1, -1},
     {"UFFA", -1, -1},
     {"Risolvo dopo", -1, -1},
-    {"Nanna", 23, 7, -1, Icon::MOON},
-    {"Che sonno", 22, 7, -1, Icon::MOON},
-    {"", -1, -1, FELICE, Icon::HEART},
-    {"Ti voglio bene", -1, -1, FELICE, Icon::HEART},
-    {"Che bello", -1, -1, FELICE, Icon::STAR},
-    {"Giornata top", -1, -1, FELICE, Icon::STAR},
-    {"EVVIVA", -1, -1, FELICE},
-    {"Mi annoio", -1, -1, GIU},
-    {"Coccole?", -1, -1, GIU, Icon::HEART},
-    {"Uff...", -1, -1, GIU},
-    {"Mi ignori?", -1, -1, TRISTE},
-    {"Mi manchi", -1, -1, TRISTE, Icon::HEART},
-    {"Sola soletta", -1, -1, TRISTE},
+    {"Nanna", 23, 7, Icon::MOON},
+    {"Che sonno", 22, 7, Icon::MOON},
+    {"", -1, -1, Icon::HEART},
+    {"Ti voglio bene", -1, -1, Icon::HEART},
+    {"Che bello", -1, -1, Icon::STAR},
+    {"Giornata top", -1, -1, Icon::STAR},
+    {"EVVIVA", -1, -1},
+    {"Mi annoio", -1, -1},
+    {"Coccole?", -1, -1, Icon::HEART},
+    {"Uff...", -1, -1},
+    {"Mi ignori?", -1, -1},
+    {"Mi manchi", -1, -1, Icon::HEART},
+    {"Sola soletta", -1, -1},
 };
 const int PHRASE_COUNT = sizeof(PHRASES) / sizeof(PHRASES[0]);
 
@@ -164,26 +160,22 @@ static bool fits_hour(const Phrase &p, int hour) {
   return hour >= p.from_hour || hour < p.to_hour; // fascia che passa la mezzanotte
 }
 
-SignContent sign_pick_phrase(int hour, Mood mood) {
+SignContent sign_pick_phrase(int hour) {
   int candidates[PHRASE_COUNT];
   int n = 0;
   auto collect = [&](auto wanted) {
     n = 0;
     for (int i = 0; i < PHRASE_COUNT; i++) {
       const Phrase &p = PHRASES[i];
-      bool usable = i != last_phrase && fits_hour(p, hour) &&
-                    (p.mood < 0 || p.mood == (int8_t)mood);
+      bool usable = i != last_phrase && fits_hour(p, hour);
       if (usable && wanted(p)) {
         candidates[n++] = i;
       }
     }
   };
 
-  // umore e ora hanno la loro occasione, poi tutte le altre
-  if (mood != Mood::NORMALE && random(2) == 0) {
-    collect([](const Phrase &p) { return p.mood >= 0; });
-  }
-  if (n == 0 && random(2) == 0) {
+  // le frasi legate all'ora hanno la loro occasione, poi tutte le altre
+  if (random(2) == 0) {
     collect([](const Phrase &p) { return p.from_hour >= 0; });
   }
   if (n == 0) {

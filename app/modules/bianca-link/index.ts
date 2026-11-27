@@ -1,8 +1,8 @@
 import { NativeModule, requireNativeModule } from 'expo';
 
-export type ClipStatus = { mood: number; steps: number; sleeping: boolean; battery: number };
+export type ClipStatus = { sleeping: boolean; battery: number; brightness: number };
 export type LinkState = {
-  phase: 'disconnected' | 'pairing' | 'connecting' | 'connected' | 'error';
+  phase: 'disconnected' | 'pairing' | 'connecting' | 'connected' | 'sleeping' | 'error';
   message: string;
   status: ClipStatus | null;
 };
@@ -28,6 +28,8 @@ declare class BiancaLinkModule extends NativeModule<{ onState: (state: LinkState
   openNotificationSettings(): Promise<void>;
   getState(): LinkState;
   sendCommands(actions: number[], texts: string[]): Promise<void>;
+  // la molletta si spegne e si risveglia solo toccandola
+  sleep(): Promise<void>;
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   forget(): Promise<void>;

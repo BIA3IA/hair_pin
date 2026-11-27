@@ -1,15 +1,16 @@
 #include "ble/collegamento.h"
+#include "batteria/batteria.h"
 #include "comportamento/comportamento.h"
 #include "display/background.h"
 #include "display/display.h"
 #include "imu/imu.h"
 #include "imu/registro.h"
 #include "player/player.h"
+#include "riposo/riposo.h"
 #include "rtc/orologio.h"
 #include "sprites/sprite.h"
 #include "state_machine/state_machine.h"
 #include "touch/tocchi_display.h"
-#include "umore/umore.h"
 #include <Arduino.h>
 
 const unsigned long IMU_INTERVAL_MS = 20; // 50 Hz, come i contapassi
@@ -21,14 +22,17 @@ static void handle_bluetooth() {
   NotifyPacket notify;
   if (!collegamento_connected()) comportamento_clear_phrases();
   while (collegamento_take_notify(&notify)) {
+    uint8_t level;
     if (notify.flags == 0) comportamento_notify(static_cast<Icon>(notify.icon), notify.text);
-    else if (collegamento_connected()) comportamento_command(notify.flags, notify.text);
+    else if (!collegamento_connected()) continue;
+    else if (notify.flags == ACTION_SLEEP) riposo_dormi();
+    else if (notify.flags == ACTION_BRIGHTNESS && parse_brightness(notify.text, &level)) comportamento_set_brightness(level);
+    else comportamento_command(notify.flags, notify.text);
   }
   TimePacket t;
   if (collegamento_take_time(&t)) {
     rtc_set(t.year, t.month, t.day, t.hour, t.minute, t.second);
     hour_now = rtc_hour();
-    umore_update(rtc_date_key());
     Serial.printf("Ora dal telefono: %02d:%02d\n", t.hour, t.minute);
   }
   uint32_t passkey;
@@ -39,19 +43,18 @@ static void handle_bluetooth() {
     comportamento_pairing_done();
     Serial.println("Telefono abbinato");
   }
-  collegamento_update({static_cast<uint8_t>(umore_value()), umore_steps_today(),
-                       comportamento_sleeping(), BATTERY_UNKNOWN});
+  collegamento_update({comportamento_sleeping(), batteria_percentuale(), comportamento_brightness()});
 }
 
 void setup() {
   Serial.begin(115200);
   Serial.setTxTimeoutMs(0); // senza monitor aperto ogni print aspetterebbe
+  batteria_init();
   display_init();
   imu_init();
   touch_init();
   rtc_init();
   hour_now = rtc_hour();
-  umore_init(rtc_date_key());
   sprite_init();
   registro_init();
   collegamento_init();
@@ -70,10 +73,9 @@ void loop() {
   if (now - last_clock >= CLOCK_INTERVAL_MS) {
     last_clock = now;
     hour_now = rtc_hour();
-    umore_update(rtc_date_key());
   }
-  umore_add_steps(imu_take_steps());
   registro_poll_serial();
+  batteria_update();
   handle_bluetooth();
 
   int x, y, w, h;

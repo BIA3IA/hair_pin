@@ -13,19 +13,30 @@ class ProtocolTest {
     assertEquals(4, Protocol.command(3, "").size)
     assertThrows(IllegalArgumentException::class.java) { Protocol.command(2, "è".repeat(25)) }
     assertThrows(IllegalArgumentException::class.java) { Protocol.command(4, "") }
-    assertThrows(IllegalArgumentException::class.java) { Protocol.command(6, "x") }
+    assertThrows(IllegalArgumentException::class.java) { Protocol.command(8, "") }
   }
-  @Test fun statusDecodesUnsignedStepsAndFlags() {
-    val result = Protocol.decodeStatus(byteArrayOf(1, 3, -1, -1, -1, -1, 1, -1))!!
-    assertEquals(4294967295L, result["steps"])
-    assertEquals(3, result["mood"])
+  @Test fun brightnessAndSleepCommands() {
+    val packet = Protocol.command(Protocol.BRIGHTNESS, "128")
+    assertEquals(6, packet[2].toInt())
+    assertEquals("128", packet.copyOfRange(4, packet.size).toString(Charsets.UTF_8))
+    assertArrayEquals(byteArrayOf(1, 0, 7, 0), Protocol.command(Protocol.SLEEP, ""))
+    assertThrows(IllegalArgumentException::class.java) { Protocol.command(Protocol.BRIGHTNESS, "5") }
+    assertThrows(IllegalArgumentException::class.java) { Protocol.command(Protocol.BRIGHTNESS, "256") }
+    assertThrows(IllegalArgumentException::class.java) { Protocol.command(Protocol.BRIGHTNESS, "alta") }
+    assertThrows(IllegalArgumentException::class.java) { Protocol.command(Protocol.SLEEP, "x") }
+  }
+  @Test fun statusDecodesSleepingBatteryAndBrightness() {
+    val result = Protocol.decodeStatus(byteArrayOf(3, 1, -1, -128))!!
     assertEquals(true, result["sleeping"])
     assertEquals(255, result["battery"])
+    assertEquals(128, result["brightness"])
+    assertEquals(false, Protocol.decodeStatus(byteArrayOf(3, 0, 80, 10))!!["sleeping"])
   }
   @Test fun statusRejectsWrongVersionAndLength() {
     assertNull(Protocol.decodeStatus(byteArrayOf()))
-    assertNull(Protocol.decodeStatus(byteArrayOf(2, 0, 0, 0, 0, 0, 0, 0)))
-    assertNull(Protocol.decodeStatus(ByteArray(9)))
+    assertNull(Protocol.decodeStatus(byteArrayOf(1, 0, 0)))
+    assertNull(Protocol.decodeStatus(byteArrayOf(2, 0, 80))) // versione precedente senza luminosità
+    assertNull(Protocol.decodeStatus(byteArrayOf(1, 3, -1, -1, -1, -1, 1, -1))) // vecchio formato con umore e passi
   }
   @Test fun timeUsesFirmwareSevenByteLocalFormat() {
     val before = Calendar.getInstance()

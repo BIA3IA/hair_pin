@@ -13,8 +13,14 @@
 constexpr uint8_t PROTOCOL_VERSION = 1;
 constexpr size_t NOTIFY_TEXT_MAX = 48;
 constexpr uint8_t ICON_COUNT = 12;
-constexpr size_t STATUS_SIZE = 8;
+constexpr uint8_t STATUS_VERSION = 3;
+constexpr size_t STATUS_SIZE = 4;
 constexpr uint8_t BATTERY_UNKNOWN = 0xFF;
+constexpr uint8_t MIN_BRIGHTNESS = 10;
+
+// azioni dei comandi: 1 animazione, 2 cartello, 3-4-5 frasi, 6 luminosita', 7 dormi
+constexpr uint8_t ACTION_BRIGHTNESS = 6;
+constexpr uint8_t ACTION_SLEEP = 7;
 
 // NOTIFY: versione, icona, flag, lunghezza, testo UTF-8
 struct NotifyPacket {
@@ -29,16 +35,19 @@ struct TimePacket {
   uint8_t month, day, hour, minute, second;
 };
 
+// STATUS: versione, flag (bit 0 = dorme), batteria, luminosita'
 struct StatusPacket {
-  uint8_t mood;
-  uint32_t steps;
   bool sleeping;
   uint8_t battery;
+  uint8_t brightness;
 };
 
 bool valid_animation(const char *name);
 
 bool decode_notify(const uint8_t *data, size_t len, NotifyPacket *out);
+// luminosita' scritta in cifre, MIN_BRIGHTNESS..255
+bool parse_brightness(const char *text, uint8_t *out);
+
 bool decode_time(const uint8_t *data, size_t len, TimePacket *out);
 // scrive STATUS_SIZE byte in out
 void encode_status(const StatusPacket &status, uint8_t *out);

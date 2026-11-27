@@ -2,7 +2,6 @@
 
 static unsigned long prev_interval = 0;
 static bool walking = false;
-static int new_steps = 0;
 
 
 bool is_walking(bool step_this_tick, bool is_rotating) {
@@ -47,11 +46,9 @@ bool is_walking(bool step_this_tick, bool is_rotating) {
     }
     last_step_time = now;
 
-    if (walking) {
-      new_steps++;
-    } else if (consistent_steps >= 2) {
+    // Due intervalli coerenti (tre passi) bastano a confermare il ritmo.
+    if (consistent_steps >= 1) {
       walking = true;
-      new_steps += consistent_steps + 1; // anche i passi che l'hanno fatta partire
     }
   }
 
@@ -78,10 +75,4 @@ bool is_running() {
     running = prev_interval < RUN_ENTRY_MS;
   }
   return running;
-}
-
-int walking_take_steps() {
-  int n = new_steps;
-  new_steps = 0;
-  return n;
 }

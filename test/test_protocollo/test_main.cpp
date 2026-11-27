@@ -69,8 +69,8 @@ static void time_fuori_intervallo() {
 
 static void status_codificato() {
   uint8_t out[STATUS_SIZE];
-  encode_status({72, 4200, true, BATTERY_UNKNOWN}, out);
-  const uint8_t expected[] = {1, 72, 0x68, 0x10, 0, 0, 1, 0xFF};
+  encode_status({true, BATTERY_UNKNOWN, 128}, out);
+  const uint8_t expected[] = {STATUS_VERSION, 1, 0xFF, 128};
   TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, out, STATUS_SIZE);
 }
 
@@ -105,6 +105,37 @@ static void comandi_remoti() {
   TEST_ASSERT_TRUE(decode_notify(commit, sizeof(commit), &packet));
 }
 
+static void luminosita() {
+  NotifyPacket packet;
+  uint8_t level = 0;
+  const uint8_t ok[] = {1, 0, 6, 3, '1', '2', '8'};
+  const uint8_t max[] = {1, 0, 6, 3, '2', '5', '5'};
+  const uint8_t troppo_bassa[] = {1, 0, 6, 1, '5'};
+  const uint8_t troppo_alta[] = {1, 0, 6, 3, '2', '5', '6'};
+  const uint8_t non_numero[] = {1, 0, 6, 2, '1', 'x'};
+  const uint8_t vuota[] = {1, 0, 6, 0};
+  TEST_ASSERT_TRUE(decode_notify(ok, sizeof(ok), &packet));
+  TEST_ASSERT_EQUAL_UINT8(ACTION_BRIGHTNESS, packet.flags);
+  TEST_ASSERT_TRUE(parse_brightness(packet.text, &level));
+  TEST_ASSERT_EQUAL_UINT8(128, level);
+  TEST_ASSERT_TRUE(decode_notify(max, sizeof(max), &packet));
+  TEST_ASSERT_FALSE(decode_notify(troppo_bassa, sizeof(troppo_bassa), &packet));
+  TEST_ASSERT_FALSE(decode_notify(troppo_alta, sizeof(troppo_alta), &packet));
+  TEST_ASSERT_FALSE(decode_notify(non_numero, sizeof(non_numero), &packet));
+  TEST_ASSERT_FALSE(decode_notify(vuota, sizeof(vuota), &packet));
+}
+
+static void dormi() {
+  NotifyPacket packet;
+  const uint8_t ok[] = {1, 0, 7, 0};
+  const uint8_t con_testo[] = {1, 0, 7, 1, 'x'};
+  const uint8_t sconosciuto[] = {1, 0, 8, 0};
+  TEST_ASSERT_TRUE(decode_notify(ok, sizeof(ok), &packet));
+  TEST_ASSERT_EQUAL_UINT8(ACTION_SLEEP, packet.flags);
+  TEST_ASSERT_FALSE(decode_notify(con_testo, sizeof(con_testo), &packet));
+  TEST_ASSERT_FALSE(decode_notify(sconosciuto, sizeof(sconosciuto), &packet));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(icone_chat);
@@ -118,5 +149,7 @@ int main() {
   RUN_TEST(time_valido);
   RUN_TEST(time_fuori_intervallo);
   RUN_TEST(status_codificato);
+  RUN_TEST(luminosita);
+  RUN_TEST(dormi);
   return UNITY_END();
 }

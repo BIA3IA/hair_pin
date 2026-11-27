@@ -22,10 +22,25 @@ bool decode_notify(const uint8_t *data, size_t len, NotifyPacket *out) {
     out->text[i] = c < 0x20 && c != '\n' ? ' ' : (char)c; // niente caratteri di controllo
   }
   out->text[text_len] = '\0';
-  if (out->flags > 5) return false;
+  if (out->flags > ACTION_SLEEP) return false;
+  uint8_t level;
+  if (out->flags == ACTION_BRIGHTNESS && !parse_brightness(out->text, &level)) return false;
   if (out->flags == 1 && !valid_animation(out->text)) return false;
   if ((out->flags == 2 || out->flags == 4) && text_len == 0) return false;
-  if ((out->flags == 3 || out->flags == 5) && text_len != 0) return false;
+  if ((out->flags == 3 || out->flags == 5 || out->flags == ACTION_SLEEP) && text_len != 0) return false;
+  return true;
+}
+
+bool parse_brightness(const char *text, uint8_t *out) {
+  int value = 0;
+  size_t len = strlen(text);
+  if (len == 0 || len > 3) return false;
+  for (size_t i = 0; i < len; i++) {
+    if (text[i] < '0' || text[i] > '9') return false;
+    value = value * 10 + (text[i] - '0');
+  }
+  if (value < MIN_BRIGHTNESS || value > 255) return false;
+  *out = (uint8_t)value;
   return true;
 }
 
@@ -49,12 +64,8 @@ bool decode_time(const uint8_t *data, size_t len, TimePacket *out) {
 }
 
 void encode_status(const StatusPacket &status, uint8_t *out) {
-  out[0] = PROTOCOL_VERSION;
-  out[1] = status.mood;
-  out[2] = status.steps & 0xFF;
-  out[3] = (status.steps >> 8) & 0xFF;
-  out[4] = (status.steps >> 16) & 0xFF;
-  out[5] = (status.steps >> 24) & 0xFF;
-  out[6] = status.sleeping ? 1 : 0;
-  out[7] = status.battery;
+  out[0] = STATUS_VERSION;
+  out[1] = status.sleeping ? 1 : 0;
+  out[2] = status.battery;
+  out[3] = status.brightness;
 }

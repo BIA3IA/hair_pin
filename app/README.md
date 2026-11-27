@@ -24,6 +24,18 @@ L’icona Bluetooth apre il popup di collegamento. Le animazioni manuali partono
 
 L’anteprima usa i bitmap U8g2 estratti con `python3 ../tools/export_sign_fonts.py`, dopo aver installato le librerie firmware con PlatformIO. `python3 ../tools/sign_preview/reference.py` rigenera i raster di riferimento usando le funzioni wrap/draw_text del C++ firmware con un display host. `node --test test/*.test.mjs` verifica soglie umore e raster di frasi, accenti e ritorni a capo. Le frasi che non entrano o usano caratteri assenti nei font sono segnalate prima dell’invio.
 
+## Batteria della molletta
+
+La home mostra la percentuale stimata ricevuta via Bluetooth. Senza collegamento non mostra l'ultimo valore come attuale; una misura non valida appare come non disponibile.
+
+Il firmware legge GPIO0 (BAT_ADC), con divisore 200 kΩ / 100 kΩ: tensione batteria = lettura ADC × 3. Media 16 campioni ogni 30 secondi e filtra le variazioni. La conversione usa una curva indicativa LiPo 1S, ancora da tarare sulla batteria reale; durante la ricarica la percentuale può risultare ottimista. Non è disponibile una rilevazione certa della batteria scollegata o dello stato di ricarica.
+
+Bianca mostra anche un cartello con la sola percentuale a intervalli casuali di 10–20 minuti, alla prima occasione tranquilla di giorno. Aspetta il termine delle azioni in corso e rispetta il cooldown dei cartelli. Funziona anche senza telefono e con un bundle personalizzato selezionato. L'attesa riparte quando il cartello è stato effettivamente mostrato; non dipende dal cambio di percentuale.
+
+Riferimento hardware e demo `Arduino/examples/03_battery_example/03_battery_example.ino`: https://www.waveshare.com/wiki/ESP32-C6-Touch-LCD-1.69
+
+Test della misura e del filtro: `pio test -e native-battery` dalla radice del progetto.
+
 ## Notifiche del telefono
 
 Aprire “Notifiche” → “Apri accesso notifiche” e concedere a Bianca l’accesso nella schermata Android. Attendere una nuova notifica dall’app desiderata, aggiornare l’elenco e abilitarla scegliendo nome app, mittente o mittente + anteprima. La prima notifica serve a popolare l’elenco; non viene inoltrata perché l’app nuova è disabilitata. Nessun silenzio, nemmeno notturno. Il firmware deve includere la rimozione dello scarto notturno.
